@@ -32,7 +32,7 @@ public class Main {
         MoveService moveService = new MoveServiceImpl(island);
         int maxPlantsOnField = getMaxCountOnField(entityCharacteristicConfig, EntityType.GRASS);
         int maxWolfsOnField = getMaxCountOnField(entityCharacteristicConfig, EntityType.WOLF);
-        //Для начала ручками добавляем в island: grass, wolf, mouse и всех остальных
+        //TODO Для начала ручками добавляем в island: grass, wolf, mouse и всех остальных
         // add Grass
         island.getIsland().values()
                 .forEach(value -> IntStream.range(0, random.nextInt(maxPlantsOnField))
@@ -59,7 +59,7 @@ public class Main {
         System.out.println(island);
     }
 
-    // На примере createGrass сделать остальные методы: createHorse, createMouse и т.д.
+    //TODO На примере createGrass сделать остальные методы: createHorse, createMouse и т.д.
     private static Grass createGrass(EntityCharacteristicConfig entityCharacteristicConfig) {
         return new Grass(entityCharacteristicConfig.getEntityMapConfig().get(EntityType.GRASS));
     }

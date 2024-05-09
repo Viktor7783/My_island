@@ -10,6 +10,10 @@ public abstract class Animal extends Entity implements AnimalActions {
         super(weight, maxCountOnField, speed, kgToGetFull);
     }
 
+    public boolean isMovedInThisLap() {
+        return isMovedInThisLap;
+    }
+
     @Override
     public void move() {
         System.out.println("Animal move");

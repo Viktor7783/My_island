@@ -1,20 +1,98 @@
 {
   "wolf": {
-    "weight": 12.0,
-    "maxCountOnField": 10,
-    "speed": 10,
-    "kgToGetFull": 12.0
+    "weight": 50.0,
+    "maxCountOnField": 30,
+    "speed": 3,
+    "kgToGetFull": 8.0
+  },
+  "python": {
+    "weight": 15.0,
+    "maxCountOnField": 30,
+    "speed": 1,
+    "kgToGetFull": 3.0
+  },
+  "fox": {
+    "weight": 8.0,
+    "maxCountOnField": 30,
+    "speed": 2,
+    "kgToGetFull": 2.0
+  },
+  "bear": {
+    "weight": 500.0,
+    "maxCountOnField": 5,
+    "speed": 2,
+    "kgToGetFull": 80.0
+  },
+  "eagle": {
+    "weight": 6.0,
+    "maxCountOnField": 20,
+    "speed": 3,
+    "kgToGetFull": 1.0
+  },
+  "horse": {
+    "weight": 400.0,
+    "maxCountOnField": 20,
+    "speed": 4,
+    "kgToGetFull": 60.0
+  },
+  "deer": {
+    "weight": 300.0,
+    "maxCountOnField": 20,
+    "speed": 4,
+    "kgToGetFull": 50.0
+  },
+  "rabbit": {
+    "weight": 2.0,
+    "maxCountOnField": 150,
+    "speed": 2,
+    "kgToGetFull": 0.45
   },
   "mouse": {
-    "weight": 15.0,
-    "maxCountOnField": 14,
-    "speed": 15,
-    "kgToGetFull": 11.0
+    "weight": 0.05,
+    "maxCountOnField": 500,
+    "speed": 1,
+    "kgToGetFull": 0.01
+  },
+  "goat": {
+    "weight": 60.0,
+    "maxCountOnField": 140,
+    "speed": 3,
+    "kgToGetFull": 10.0
+  },
+  "sheep": {
+    "weight": 70.0,
+    "maxCountOnField": 140,
+    "speed": 3,
+    "kgToGetFull": 15.0
+  },
+  "hog": {
+    "weight": 400.0,
+    "maxCountOnField": 50,
+    "speed": 2,
+    "kgToGetFull": 50.0
+  },
+  "bull": {
+    "weight": 700.0,
+    "maxCountOnField": 10,
+    "speed": 3,
+    "kgToGetFull": 100.0
+  },
+  "duck": {
+    "weight": 1.0,
+    "maxCountOnField": 200,
+    "speed": 4,
+    "kgToGetFull": 0.15
+  },
+  "caterpillar": {
+    "weight": 0.01,
+    "maxCountOnField": 1000,
+    "speed": 0,
+    "kgToGetFull": 0.0
   },
   "grass": {
-    "weight": 2.2,
-    "maxCountOnField": 33,
+    "weight": 1,
+    "maxCountOnField": 200,
     "speed": 0,
-    "kgToGetFull": 0.5
+    "kgToGetFull": 0
   }
 }

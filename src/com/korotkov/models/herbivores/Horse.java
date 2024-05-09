@@ -1,11 +1,11 @@
 package com.korotkov.models.herbivores;
 
-public class Mouse extends Herbivore {
-    public Mouse(Double weight, Integer maxCountOnField, Integer speed, Double kgToGetFull) {
+public class Horse extends Herbivore {
+    public Horse(Double weight, Integer maxCountOnField, Integer speed, Double kgToGetFull) {
         super(weight, maxCountOnField, speed, kgToGetFull);
     }
 
-    private Mouse() {
+    private Horse() {
         super(null, null, null, null);
     }
 }

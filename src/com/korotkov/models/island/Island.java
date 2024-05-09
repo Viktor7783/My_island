@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Island {
-    private Map<Field, List<Entity>> island;
+    private final Map<Field, List<Entity>> island;
 
     public Map<Field, List<Entity>> getIsland() {
         return island;

@@ -8,7 +8,7 @@ public class Wolf extends Predator {
     }
 
     public Wolf(Entity entity) {
-        super(entity.getWeight(), entity.getMaxCountOnField(), entity.getSpeed(), entity.getKgToGetFull());
+        super(entity);
     }
 
     private Wolf() {

@@ -34,7 +34,6 @@ public class PossibilityOfEatingConfig {
             System.out.printf(OBJECT_MAPPER_READ_ERROR, pathToJson, pathToJson);
             System.exit(0);
         }
-        System.out.println(possibilityOfEating);
     }
 
     private static class MyHelpToDeserializeObject {

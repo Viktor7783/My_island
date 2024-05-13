@@ -10,10 +10,21 @@ public abstract class Animal extends Entity implements AnimalActions {
         super(weight, maxCountOnField, speed, kgToGetFull);
     }
 
+    public Animal(Entity entity) {
+        super(entity);
+    }
+
     public boolean isMovedInThisLap() {
         return isMovedInThisLap;
     }
 
+    /*Животные могут:
+    есть растения и/или других животных (если в их локации есть подходящая еда),
+    передвигаться (в соседние локации),
+    размножаться (при наличии пары в их локации),
+    умирать от голода или быть съеденными.
+*/
+    // TODO В конкретных классах того или иного вида можно дорабатывать все методы под особенности животного.
     @Override
     public void move() {
         System.out.println("Animal move");
@@ -21,6 +32,8 @@ public abstract class Animal extends Entity implements AnimalActions {
 
     @Override
     public void eat() {
+        // TODO В классах травоядного и хищника можно реализовать метод покушать.
+        // Но обрати внимание, есть травоядное утка, которое ест гусеницу.
         System.out.println("Animal eat");
     }
 

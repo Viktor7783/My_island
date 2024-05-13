@@ -8,7 +8,7 @@ public class Grass extends Plant {
     }
 
     public Grass(Entity entity) {
-        super(entity.getWeight(), entity.getMaxCountOnField(), entity.getSpeed(), entity.getKgToGetFull());
+        super(entity);
     }
 
     private Grass() {

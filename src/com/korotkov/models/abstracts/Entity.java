@@ -1,15 +1,5 @@
 package com.korotkov.models.abstracts;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.KeyDeserializer;
-import com.fasterxml.jackson.databind.deser.std.MapEntryDeserializer;
-import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
-
-import java.io.IOException;
 
 public abstract class Entity {
     protected Double weight;
@@ -22,6 +12,13 @@ public abstract class Entity {
         this.maxCountOnField = maxCountOnField;
         this.speed = speed;
         this.kgToGetFull = kgToGetFull;
+    }
+
+    protected Entity(Entity entity) {
+        this.weight = entity.getWeight();
+        this.maxCountOnField = entity.getMaxCountOnField();
+        this.speed = entity.getSpeed();
+        this.kgToGetFull = entity.getKgToGetFull();
     }
 
     private Entity() {
@@ -42,5 +39,6 @@ public abstract class Entity {
     public Double getKgToGetFull() {
         return kgToGetFull;
     }
+
 }
 

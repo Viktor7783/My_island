@@ -16,7 +16,7 @@ public class MoveServiceImpl implements MoveService {
 
     @Override
     public void move(Animal movingAnimal, Field from, DirectionType direction, int speed) { //Добавить животное???
-        // 0.0 -> RIGHT, DOWN
+        // 0.0 -> RIGHT, DOWN (Проверяем, если мы в 0.0 -> то двигаться можем только вправо или вниз
         // TODO: проверить - а сколько там еще таких же животных и можно ли в эту клетку добавить ещё одного?
         // TODO: move entity from one field to another field
 

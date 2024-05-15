@@ -4,14 +4,31 @@ import com.korotkov.services.AnimalActions;
 
 public abstract class Animal extends Entity implements AnimalActions {
 
+    private int healthPercent;
     private boolean isMovedInThisLap; // TODO: если животное уже двигалось в этот ход (круг) - то двигать его не нужно
 
     public Animal(Double weight, Integer maxCountOnField, Integer speed, Double kgToGetFull) {
         super(weight, maxCountOnField, speed, kgToGetFull);
+        healthPercent = 100;
+        isMovedInThisLap = false;
     }
 
     public Animal(Entity entity) {
         super(entity);
+        healthPercent = 100;
+        isMovedInThisLap = false;
+    }
+
+    public void setHealthPercent(int healthPercent) {
+        this.healthPercent = healthPercent;
+    }
+
+    public void setMovedInThisLap(boolean movedInThisLap) {
+        isMovedInThisLap = movedInThisLap;
+    }
+
+    public int getHealthPercent() {
+        return healthPercent;
     }
 
     public boolean isMovedInThisLap() {
@@ -25,10 +42,10 @@ public abstract class Animal extends Entity implements AnimalActions {
     умирать от голода или быть съеденными.
 */
     // TODO В конкретных классах того или иного вида можно дорабатывать все методы под особенности животного.
-    @Override
+   /* @Override
     public void move() {
         System.out.println("Animal move");
-    }
+    }*/
 
     @Override
     public void eat() {

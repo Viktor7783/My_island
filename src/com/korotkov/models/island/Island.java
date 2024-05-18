@@ -6,13 +6,14 @@ import com.korotkov.models.abstracts.Entity;
 import com.korotkov.models.enums.EntityType;
 import com.korotkov.models.plants.Grass;
 import com.korotkov.models.plants.Plant;
+import com.korotkov.services.IslandActions;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-public class Island {
+public class Island implements IslandActions {
     private final Map<Field, List<Entity>> island;
 
     public Map<Field, List<Entity>> getIsland() {
@@ -23,11 +24,12 @@ public class Island {
         this.island = island;
     }
 
+    @Override
     public void removeDeathAnimal() {
         island.values().forEach(list -> list.removeIf(entity -> entity instanceof Animal && ((Animal) entity).getHealthPercent() <= 0));
     }
 
-
+    @Override
     public void refillPlants(EntityCharacteristicConfig entityCharacteristicConfig, Random random) {
         int maxCountOfPlantsInOneField = entityCharacteristicConfig.getEntityMapConfig().get(EntityType.GRASS).getMaxCountOnField();
         for (List<Entity> entities : island.values()) {

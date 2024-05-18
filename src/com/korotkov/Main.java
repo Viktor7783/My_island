@@ -13,6 +13,7 @@ import com.korotkov.models.island.Island;
 import com.korotkov.services.MoveService;
 import com.korotkov.services.impl.ChooseDirectionServiceImpl;
 import com.korotkov.services.impl.MoveServiceImpl;
+import com.korotkov.services.impl.UpdateSettingsService;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -32,11 +33,11 @@ public class Main {
         PossibilityOfEatingConfig possibilityOfEatingConfig = new PossibilityOfEatingConfig(objectMapper, PATH_TO_POSSIBILITY_OF_EATING, entityCharacteristicConfig.getEntityMapConfig());
         IslandConfig islandConfig = new IslandConfig(PATH_TO_ISLAND_SETTINGS);
         ChooseDirectionServiceImpl chooseDirectionServiceImpl = new ChooseDirectionServiceImpl(random);
-
+        UpdateSettingsService updateSettingsService = new UpdateSettingsService(islandConfig, entityCharacteristicConfig);
         // ОПЦИОНАЛЬНО: менять дефолтные настройки
-        updateSettings(islandConfig, entityCharacteristicConfig, possibilityOfEatingConfig);
+        updateSettingsService.updateSettings();
 
-
+        System.out.println(GO_GO_GO);
         Island island = createIsland(islandConfig);
         //Заполняем остров животными и растениями
         island.getIsland().values()
@@ -46,7 +47,10 @@ public class Main {
 
         MoveService moveService = new MoveServiceImpl(island);
         //Здесь мы двигаем всех животных (Animal) во всех полях (Field) по одному разу!!! (Получается один кон)
-        //TODO Сюда же добавить island.refillPlants(..) и removeDeathAnimal()
+        island.removeDeathAnimal(); // Удаляем мертвечину (Те животные у кого health<=0)
+        //TODO  Животное умирает если пищи нужно животному для полного насыщения = 0 или животное съели
+        //Способ проверки: в конце хода если 0; 3 хода без еды; в начале хода
+        island.refillPlants(entityCharacteristicConfig, random);// Подсаживаем растения за один кон
         for (Map.Entry<Field, List<Entity>> fieldListEntry : island.getIsland().entrySet()) {
             Field field = fieldListEntry.getKey();
             List<Animal> animals = fieldListEntry.getValue().stream().filter(Animal.class::isInstance).map(e -> (Animal) e).toList();
@@ -59,16 +63,17 @@ public class Main {
             }
         }
 
+        //TODO Вывод статистики в конце каждого кона (Сбор статистики идет для всех животных + трава)
+        // Каждый ход собирается статистика:
+        // сколько животных осталось на текущий момент
+        // сколько животных умерло от голода/были съедены
+        // сколько родилось новых животных
+        // разница между первым ходом и текущим по кол-ву животных
+
 
         System.out.println(island);
     }
 
-    private static void updateSettings(IslandConfig islandConfig, EntityCharacteristicConfig entityCharacteristicConfig, PossibilityOfEatingConfig possibilityOfEatingConfig) {
-        // TODO Написать логику изменения параметров игры перед запуском. Здесь используем сеттеры!!!
-        System.out.println("Будешь что-то менять?");
-        islandConfig.setWidth(200);
-
-    }
 
     private static Entity createCurrentEntity(EntityCharacteristicConfig entityCharacteristicConfig, EntityType currentEntityType) {
         Entity currentEntity = null;

@@ -2,10 +2,10 @@ package com.korotkov.models.abstracts;
 
 
 public abstract class Entity {
-    protected Double weight;
-    protected Integer maxCountOnField;
-    protected Integer speed;
-    protected Double kgToGetFull;
+    private Double weight;
+    private Integer maxCountOnField;
+    private Integer speed;
+    private Double kgToGetFull;
 
     protected Entity(Double weight, Integer maxCountOnField, Integer speed, Double kgToGetFull) {
         this.weight = weight;
@@ -40,5 +40,21 @@ public abstract class Entity {
         return kgToGetFull;
     }
 
+
+    public void setWeight(Double weight) {
+        if (weight > 0) this.weight = weight;
+    }
+
+    public void setMaxCountOnField(Integer maxCountOnField) {
+        if (maxCountOnField > 0) this.maxCountOnField = maxCountOnField;
+    }
+
+    public void setSpeed(Integer speed) {
+        if (speed > 0) this.speed = speed;
+    }
+
+    public void setKgToGetFull(Double kgToGetFull) {
+        if (kgToGetFull > 0) this.kgToGetFull = kgToGetFull;
+    }
 }
 

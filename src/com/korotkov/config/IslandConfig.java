@@ -36,14 +36,14 @@ public class IslandConfig {
     }
 
     public void setWidth(int width) {
-        this.width = width;
+        if (width >= 1 && width <= 1000) this.width = width;
     }
 
     public void setHeight(int height) {
-        this.height = height;
+        if (height >= 1 && height <= 1000) this.height = height;
     }
 
     public void setDaysOfLife(int daysOfLife) {
-        this.daysOfLife = daysOfLife;
+        if (daysOfLife >= 1 && daysOfLife <= 1000) this.daysOfLife = daysOfLife;
     }
 }

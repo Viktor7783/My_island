@@ -6,6 +6,7 @@ public abstract class Animal extends Entity implements AnimalActions {
 
     private int healthPercent;
     private boolean isMovedInThisLap; // TODO: если животное уже двигалось в этот ход (круг) - то двигать его не нужно
+    private boolean isBornNewAnimal;
 
     public Animal(Double weight, Integer maxCountOnField, Integer speed, Double kgToGetFull) {
         super(weight, maxCountOnField, speed, kgToGetFull);
@@ -17,6 +18,14 @@ public abstract class Animal extends Entity implements AnimalActions {
         super(entity);
         healthPercent = 100;
         isMovedInThisLap = false;
+    }
+
+    public boolean isBornNewAnimal() {
+        return isBornNewAnimal;
+    }
+
+    public void setBornNewAnimal(boolean bornNewAnimal) {
+        isBornNewAnimal = bornNewAnimal;
     }
 
     public void setHealthPercent(int healthPercent) {
@@ -62,5 +71,9 @@ public abstract class Animal extends Entity implements AnimalActions {
     @Override
     public void chooseDirection() {
         System.out.println("Animal choose direction");
+    }
+
+    public void decreaseHealthPercent(int decreaseFor) {
+        this.healthPercent -= decreaseFor;
     }
 }

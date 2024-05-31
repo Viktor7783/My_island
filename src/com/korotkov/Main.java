@@ -1,16 +1,22 @@
 package com.korotkov;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.korotkov.config.AnimalConfig;
 import com.korotkov.config.EntityCharacteristicConfig;
 import com.korotkov.config.IslandConfig;
 import com.korotkov.config.PossibilityOfEatingConfig;
 import com.korotkov.models.abstracts.Animal;
 import com.korotkov.models.abstracts.Entity;
+import com.korotkov.models.abstracts.Insect;
+import com.korotkov.models.abstracts.Rodent;
+import com.korotkov.models.enums.Action;
 import com.korotkov.models.enums.DirectionType;
 import com.korotkov.models.enums.EntityType;
+import com.korotkov.models.herbivores.*;
 import com.korotkov.models.island.Field;
 import com.korotkov.models.island.Island;
-import com.korotkov.services.MoveService;
+import com.korotkov.models.plants.Plant;
+import com.korotkov.services.interfaces.MoveService;
 import com.korotkov.services.impl.ChooseDirectionServiceImpl;
 import com.korotkov.services.impl.MoveServiceImpl;
 import com.korotkov.services.impl.UpdateSettingsService;
@@ -18,6 +24,7 @@ import com.korotkov.services.impl.UpdateSettingsService;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.korotkov.config.Constants.*;
@@ -32,11 +39,10 @@ public class Main {
         EntityCharacteristicConfig entityCharacteristicConfig = new EntityCharacteristicConfig(objectMapper, PATH_TO_ENTITY_CHARACTERISTIC);
         PossibilityOfEatingConfig possibilityOfEatingConfig = new PossibilityOfEatingConfig(objectMapper, PATH_TO_POSSIBILITY_OF_EATING, entityCharacteristicConfig.getEntityMapConfig());
         IslandConfig islandConfig = new IslandConfig(PATH_TO_ISLAND_SETTINGS);
+        AnimalConfig animalConfig = new AnimalConfig(PATH_TO_ISLAND_SETTINGS);
         ChooseDirectionServiceImpl chooseDirectionServiceImpl = new ChooseDirectionServiceImpl(random);
         UpdateSettingsService updateSettingsService = new UpdateSettingsService(islandConfig, entityCharacteristicConfig);
-        // ОПЦИОНАЛЬНО: менять дефолтные настройки
         updateSettingsService.updateSettings();
-
         System.out.println(GO_GO_GO);
         Island island = createIsland(islandConfig);
         //Заполняем остров животными и растениями
@@ -46,32 +52,92 @@ public class Main {
                                 .forEach(_ -> list.add(createCurrentEntity(entityCharacteristicConfig, currentEntityType)))));
 
         MoveService moveService = new MoveServiceImpl(island);
-        //Здесь мы двигаем всех животных (Animal) во всех полях (Field) по одному разу!!! (Получается один кон)
-        island.removeDeathAnimal(); // Удаляем мертвечину (Те животные у кого health<=0)
-        //TODO  Животное умирает если пищи нужно животному для полного насыщения = 0 или животное съели
-        //Способ проверки: в конце хода если 0; 3 хода без еды; в начале хода
-        island.refillPlants(entityCharacteristicConfig, random);// Подсаживаем растения за один кон
-        for (Map.Entry<Field, List<Entity>> fieldListEntry : island.getIsland().entrySet()) {
-            Field field = fieldListEntry.getKey();
-            List<Animal> animals = fieldListEntry.getValue().stream().filter(Animal.class::isInstance).map(e -> (Animal) e).toList();
-            for (Animal animal : animals) {
-                DirectionType directionToMove = chooseDirectionServiceImpl.chooseDirection();
-                int speed = getSpeed(entityCharacteristicConfig, Arrays.stream(EntityType.values())
-                        .filter(entityType -> entityType.getClazz() == animal.getClass()).
-                        findFirst().get());
-                moveService.move(animal, field, directionToMove, speed);
+        int daysOfLive = islandConfig.getDaysOfLife();
+        //Цикл начинается здесь!!! (несколько конов)
+        while (daysOfLive > 0) { //Или пока все животные не умрут?
+            island.removeDeathAnimal(); // Удаляем мертвечину (Те животные у кого health<=0)
+            island.removeEatenPlants(); // Удаляем пожранные растения (isEaten = true)
+            island.refillPlants(entityCharacteristicConfig, random);// Подсаживаем растения за один кон
+            for (Map.Entry<Field, List<Entity>> fieldListEntry : island.getIsland().entrySet()) { //TODO: Вынести в один метод (жизнь животных)
+                Field field = fieldListEntry.getKey();
+                List<Animal> animals = fieldListEntry.getValue().stream().filter(entity -> entity instanceof Animal && ((Animal) entity).getHealthPercent() > 0).map(e -> (Animal) e).toList();
+                List<Plant> plants = fieldListEntry.getValue().stream().filter(entity -> entity instanceof Plant && !((Plant) entity).isEaten()).map(e -> (Plant) e).toList();
+                for (Animal animal : animals) {
+                    Action action = Action.values()[random.nextInt(Action.values().length)];
+                    switch (action) {
+                        case MOVE -> //TODO: иди придумай как конкретно мы будем двигаться!?!
+                                moveAnimal(animal, chooseDirectionServiceImpl, entityCharacteristicConfig, moveService, field);
+                        case EAT -> feedAnimal(animal, random, animals, possibilityOfEatingConfig, plants);
+                        case REPRODUCE -> {
+                            //TODO Как будем размножаться, господа?
+
+                        }
+                    }
+                    if (!animal.isEatInThisLap()) //Если ничего не жрамши = -20%
+                        animal.decreaseHealthPercent(animalConfig.getPercentsToRemove());
+                    else animal.setEatInThisLap(false);
+                }
+            }
+
+            //TODO Вывод статистики в конце каждого кона (Сбор статистики идет для всех животных + трава)
+            // Каждый ход собирается статистика:
+            // сколько животных осталось на текущий момент и травы ( если все подохли - конец циклу 365 дней)
+            // сколько животных умерло от голода/были съедены
+            // сколько родилось новых животных
+            // разница между первым ходом и текущим по кол-ву животных
+            --daysOfLive;
+        }
+        System.out.println(island); // DELETE
+    }
+
+    private static void feedAnimal(Animal animal, Random random, List<Animal> animals, PossibilityOfEatingConfig possibilityOfEatingConfig, List<Plant> plants) {
+        int randomPercent = random.nextInt(1, 101); //выпало 10: проверить что можнор съесть! Число 0 -нельзя съесть!
+        Set<Class<? extends Animal>> toBeEatenAnimalsClasses = animals.stream().map(Animal::getClass).collect(Collectors.toSet());//Набор классов животных для поедания
+        Map<Map<Entity, Entity>, Long> animalEatPossibilities = possibilityOfEatingConfig.getPossibilityOfEating().entrySet().stream()
+                .filter(pair -> {
+                    Map.Entry<Entity, Entity> entities = pair.getKey().entrySet().iterator().next();
+                    return entities.getKey().getClass() == animal.getClass() && entities.getValue() instanceof Animal && pair.getValue() > 0 && randomPercent <= pair.getValue() && toBeEatenAnimalsClasses.contains(entities.getValue().getClass());
+                }) //Фильтруем пары с нашим хищником и жертвой и возможностью поедания > 0
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        if (!animalEatPossibilities.isEmpty()) { // Если Кабан и есть мышь и  гусеница покушать:
+            Animal bestAnimalToEat = (Animal) (animalEatPossibilities.entrySet().stream()
+                    .min((pair1, pair2) -> Math.toIntExact(pair1.getValue() - pair2.getValue()))
+                    .get().getKey().entrySet().iterator().next().getValue());// Нашли гусеницу или мышь
+            int from = 1, to = 2;
+            if (bestAnimalToEat instanceof Insect) {
+                from = 50;
+                to = 101;
+            } else if (bestAnimalToEat instanceof Rodent) {
+                from = 20;
+                to = 51;
+            }
+            int countOfEatAnimals = random.nextInt(from, to);
+            for (Animal animalToEat : animals) {
+                if (animalToEat != animal && animalToEat.getClass() == bestAnimalToEat.getClass() && animalToEat.getHealthPercent() > 0) {
+                    animal.eat(animalToEat);//Хищник съел одно животное
+                    --countOfEatAnimals;
+                }
+                if (countOfEatAnimals < 1) break;
             }
         }
+        if (animal instanceof Herbivore) {
+            int countOfEatPlants = random.nextInt(1, 4);
+            for (Plant plantToEat : plants) {
+                if (!plantToEat.isEaten()) {
+                    animal.eat(plantToEat);
+                    --countOfEatPlants;
+                }
+                if (countOfEatPlants < 1) break;
+            }
+        }
+    }
 
-        //TODO Вывод статистики в конце каждого кона (Сбор статистики идет для всех животных + трава)
-        // Каждый ход собирается статистика:
-        // сколько животных осталось на текущий момент
-        // сколько животных умерло от голода/были съедены
-        // сколько родилось новых животных
-        // разница между первым ходом и текущим по кол-ву животных
-
-
-        System.out.println(island);
+    private static void moveAnimal(Animal animal, ChooseDirectionServiceImpl chooseDirectionServiceImpl, EntityCharacteristicConfig entityCharacteristicConfig, MoveService moveService, Field field) {
+        DirectionType directionToMove = chooseDirectionServiceImpl.chooseDirection();
+        int speed = getSpeed(entityCharacteristicConfig, Arrays.stream(EntityType.values())
+                .filter(entityType -> entityType.getClazz() == animal.getClass()).
+                findFirst().get());
+        moveService.move(animal, field, directionToMove, speed);
     }
 
 
@@ -111,5 +177,24 @@ public class Main {
             }
         }
         return new Island(island);
+    }
+}
+
+class MyTestClass { //TODO: Удалить перед pullRequest!!!
+    public static void main(String[] args) {
+        /*List<Class<? extends Animal>> list = List.of(Wolf.class, Horse.class, Hog.class, Caterpillar.class, Wolf.class, Wolf.class);
+        Class<? extends Animal> clazz = new Wolf(1.0, 1, 3, 3.0).getClass();
+        System.out.println(list);
+        System.out.println(list.contains(clazz));*/
+       /* List<Animal> list = List.of(new Wolf(1.0, 3, 4, 5.0), new Wolf(3.0, 3, 3, 3.0), new Hog(1.0, 1, 2, 3.0), new Deer(2.0, 2, 2, 2.0), new Hog(5.0, 5, 5, 5.0));
+        Set<Class<? extends Animal>> set = list.stream().map(Animal::getClass).collect(Collectors.toSet());
+        System.out.println("SET = " + set);
+        Wolf wolf = new Wolf(1.0, 3, 4, 5.0);
+        System.out.println(list.contains(wolf));
+        System.out.println(list);*/
+        Random random = new Random();
+        for (int i = 0; i < random.nextInt(1, 2); i++) {
+            System.out.println("TEST");
+        }
     }
 }

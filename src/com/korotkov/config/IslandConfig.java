@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 
+import static com.korotkov.config.Constants.OBJECT_READ_ERROR;
+
 public class IslandConfig {
     private int width;
     private int height;
@@ -19,7 +21,8 @@ public class IslandConfig {
             this.height = Integer.parseInt(properties.getProperty("island.height"));
             this.daysOfLife = Integer.parseInt(properties.getProperty("island.daysOfLife"));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.out.printf(OBJECT_READ_ERROR, pathToPropertiesFile, pathToPropertiesFile);
+            System.exit(0);
         }
     }
 
@@ -36,14 +39,14 @@ public class IslandConfig {
     }
 
     public void setWidth(int width) {
-        if (width >= 1 && width <= 1000) this.width = width;
+        if (width >= 1 && width <= 150) this.width = width;
     }
 
     public void setHeight(int height) {
-        if (height >= 1 && height <= 1000) this.height = height;
+        if (height >= 1 && height <= 150) this.height = height;
     }
 
     public void setDaysOfLife(int daysOfLife) {
-        if (daysOfLife >= 1 && daysOfLife <= 1000) this.daysOfLife = daysOfLife;
+        if (daysOfLife >= 1 && daysOfLife <= 365) this.daysOfLife = daysOfLife;
     }
 }

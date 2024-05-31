@@ -10,7 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.korotkov.config.Constants.OBJECT_MAPPER_READ_ERROR;
+import static com.korotkov.config.Constants.OBJECT_READ_ERROR;
 
 public class EntityCharacteristicConfig {
 
@@ -27,7 +27,7 @@ public class EntityCharacteristicConfig {
         try {
             entityMapConfig = objectMapper.readValue(new File(pathToJson), Map.class);
         } catch (IOException e) {
-            System.out.printf(OBJECT_MAPPER_READ_ERROR, pathToJson, pathToJson);
+            System.out.printf(OBJECT_READ_ERROR, pathToJson, pathToJson);
             System.exit(0);
         }
     }

@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.korotkov.config.Constants.OBJECT_MAPPER_READ_ERROR;
+import static com.korotkov.config.Constants.OBJECT_READ_ERROR;
 
 public class PossibilityOfEatingConfig {
     private final Map<Map<Entity, Entity>, Long> possibilityOfEating = new HashMap<>();
@@ -31,7 +31,7 @@ public class PossibilityOfEatingConfig {
                 possibilityOfEating.put(Map.of(from, to), o.getPercent());
             });
         } catch (IOException e) {
-            System.out.printf(OBJECT_MAPPER_READ_ERROR, pathToJson, pathToJson);
+            System.out.printf(OBJECT_READ_ERROR, pathToJson, pathToJson);
             System.exit(0);
         }
     }

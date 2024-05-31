@@ -6,7 +6,7 @@ import com.korotkov.models.abstracts.Entity;
 import com.korotkov.models.enums.EntityType;
 import com.korotkov.models.plants.Grass;
 import com.korotkov.models.plants.Plant;
-import com.korotkov.services.IslandActions;
+import com.korotkov.services.interfaces.IslandActions;
 
 import java.util.List;
 import java.util.Map;
@@ -27,6 +27,11 @@ public class Island implements IslandActions {
     @Override
     public void removeDeathAnimal() {
         island.values().forEach(list -> list.removeIf(entity -> entity instanceof Animal && ((Animal) entity).getHealthPercent() <= 0));
+    }
+
+    @Override
+    public void removeEatenPlants() {
+        island.values().forEach(list -> list.removeIf(entity -> entity instanceof Plant && ((Plant) entity).isEaten()));
     }
 
     @Override

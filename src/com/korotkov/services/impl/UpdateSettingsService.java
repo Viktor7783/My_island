@@ -5,151 +5,124 @@ import com.korotkov.config.IslandConfig;
 import com.korotkov.models.abstracts.Animal;
 import com.korotkov.models.abstracts.Entity;
 import com.korotkov.models.enums.EntityType;
+import com.korotkov.models.herbivores.Caterpillar;
 import com.korotkov.models.herbivores.Herbivore;
+import com.korotkov.models.herbivores.Mouse;
 import com.korotkov.models.plants.Plant;
 import com.korotkov.models.predators.Predator;
-import org.w3c.dom.ls.LSOutput;
 
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 
 import static com.korotkov.config.Constants.*;
 
 public class UpdateSettingsService {
-    IslandConfig islandConfig;
-    EntityCharacteristicConfig entityCharacteristicConfig;
-    Scanner scanner;
+    private final IslandConfig islandConfig;
+    private final EntityCharacteristicConfig entityCharacteristicConfig;
+    private final BufferedReader reader;
+    private int intNumber;
 
     public UpdateSettingsService(IslandConfig islandConfig, EntityCharacteristicConfig entityCharacteristicConfig) {
         this.islandConfig = islandConfig;
         this.entityCharacteristicConfig = entityCharacteristicConfig;
-        scanner = new Scanner(System.in);
+        reader = new BufferedReader(new InputStreamReader(System.in));
     }
 
     public void updateSettings() {
         System.out.println(CHANGE_SETTINGS);
-        String text = scanner.nextLine();
-        if (text.equals("1")) {
-            System.out.println(CHOOSE_YOUR_DESTINY);
-            String choose = scanner.nextLine();
-            switch (choose) {
-                case "1" -> {
-                    changeIslandSettings();
-                    updateSettings();
-                }
-                case "2" -> changeEntitySettings();
-                case "3" -> {
-                }
-                default -> {
-                    System.out.println(GAME_OVER);
-                    System.exit(0);
+        intNumber = safeIntegerRead(reader);
+        if (intNumber == 1) {
+            while (true) {
+                System.out.println(CHOOSE_YOUR_DESTINY);
+                intNumber = safeIntegerRead(reader);
+                switch (intNumber) {
+                    case 1 -> changeIslandSettings();
+                    case 2 -> changeEntitySettings();
+                    case 3 -> {
+                        exitSettings(reader);
+                        return;
+                    }
+                    default -> exitGame(reader);
                 }
             }
-
-        } else if (text.equals("2")) {
-            return;
-        } else {
-            System.out.println(GAME_OVER);
-            System.exit(0);
-        }
+        } else if (intNumber == 2) {
+            exitSettings(reader);
+        } else exitGame(reader);
     }
 
     private void changeIslandSettings() {
         System.out.println(SET_WIDTH_OF_ISLAND);
-        int number = scanner.nextInt();
-        islandConfig.setWidth(number);
+        islandConfig.setWidth(safeIntegerRead(reader));
         System.out.println(SET_HEIGHT_OF_ISLAND);
-        number = scanner.nextInt();
-        islandConfig.setHeight(number);
+        islandConfig.setHeight(safeIntegerRead(reader));
         System.out.println(SET_DAYS_OF_ISLAND);
-        number = scanner.nextInt();
-        islandConfig.setDaysOfLife(number);
+        islandConfig.setDaysOfLife(safeIntegerRead(reader));
         System.out.println(SETTINGS_HAVE_BEEN_CHANGED);
     }
 
     private void changeEntitySettings() {
-        // Меняем настройки животных и травы
         System.out.println(CHOOSE_CURRENT_ENTITY_SETTINGS);
-        String choose = scanner.nextLine();
-        switch (choose) {
-            case "1" -> changePredatorsSettings();
-            case "2" -> changeHerbivoresSettings();
-            case "3" -> changePlantsSettings();
-            case "4" -> updateSettings();
-            default -> {
-                System.out.println(GAME_OVER);
-                System.exit(0);
+        intNumber = safeIntegerRead(reader);
+        switch (intNumber) {
+            case 1 -> changePredatorsSettings();
+            case 2 -> changeHerbivoresSettings();
+            case 3 -> changePlantsSettings();
+            case 4 -> {
             }
+            default -> exitGame(reader);
         }
     }
 
 
     private void changePredatorsSettings() {
         System.out.println(CHANGE_PREDATOR_SETTINGS);
-        String choose = scanner.nextLine();
-        switch (choose) {
-            case "1" -> {
-                changeAllAnimals(Predator.class);
-                changeEntitySettings();
+        intNumber = safeIntegerRead(reader);
+        switch (intNumber) {
+            case 1 -> changeAllAnimals(Predator.class);
+            case 2 -> selectAndChangeEntity(Predator.class);
+            case 3 -> {
             }
-            case "2" -> {
-                selectAndChangeEntity(Predator.class);
-                changeEntitySettings();
-            }
-            case "3" -> changeEntitySettings(); //назад
-            default -> {
-                System.out.println(GAME_OVER);
-                System.exit(0);
-            }
+            default -> exitGame(reader);
         }
     }
 
-    // Сделать метод для травоядных по подобию changePredatorsSettings()
     private void changeHerbivoresSettings() {
         System.out.println(CHANGE_HERBIVORES_SETTINGS);
-        String choose = scanner.nextLine();
-        switch (choose) {
-            case "1" -> {
-                changeAllAnimals(Herbivore.class);
-                changeEntitySettings();
+        intNumber = safeIntegerRead(reader);
+        switch (intNumber) {
+            case 1 -> changeAllAnimals(Herbivore.class);
+            case 2 -> selectAndChangeEntity(Herbivore.class);
+            case 3 -> {
             }
-            case "2" -> {
-                selectAndChangeEntity(Herbivore.class);
-                changeEntitySettings();
-            }
-            case "3" -> changeEntitySettings(); //назад
-            default -> {
-                System.out.println(GAME_OVER);
-                System.exit(0);
-            }
+            default -> exitGame(reader);
         }
     }
 
     private void changePlantsSettings() {
         System.out.println(CHANGE_PLANTS_SETTINGS);
-        String choose = scanner.nextLine();
-        switch (choose) {
-            case "1" -> {
-                selectAndChangeEntity(Plant.class);
-                changeEntitySettings();
+        intNumber = safeIntegerRead(reader);
+        switch (intNumber) {
+            case 1 -> selectAndChangeEntity(Plant.class);
+            case 2 -> {
             }
-            case "2" -> changeEntitySettings(); // Назад
-            default -> {
-                System.out.println(GAME_OVER);
-                System.exit(0);
-            }
+            default -> exitGame(reader);
         }
     }
 
     private void changeAllAnimals(Class<? extends Entity> entityClass) {
         String animal = entityClass == Predator.class ? "хищников" : "травоядных";
+        int maxCountText = entityClass == Predator.class ? 35 : 200;
         System.out.printf(ALL_ANIMAL_WEIGHT, animal);
-        double weight = scanner.nextDouble();
-        System.out.printf(ALL_ANIMAL_COUNT, animal);
-        int count = scanner.nextInt();
-        System.out.println(ALL_ANIMAL_SPEED);
-        int speed = scanner.nextInt();
-        System.out.println(ALL_ANIMAL_KG_TO_GET_FULL);
-        double maxKg = scanner.nextDouble();
+        double weight = safeDoubleRead(reader);
+        System.out.printf(ALL_ANIMAL_COUNT, animal, maxCountText);
+        int count = safeIntegerRead(reader);
+        System.out.printf(ALL_ANIMAL_SPEED, animal);
+        int speed = safeIntegerRead(reader);
+        System.out.printf(ALL_ANIMAL_KG_TO_GET_FULL, animal);
+        double maxKg = safeDoubleRead(reader);
 
         if (entityClass == Predator.class) {
             for (Entity entity : entityCharacteristicConfig.getEntityMapConfig().values()) {
@@ -209,23 +182,71 @@ public class UpdateSettingsService {
 
         System.out.printf(CHOOSE_CURRENT_ENTITY, entityName);
         entityTypeMap.forEach((k, v) -> System.out.println(k + " - " + v.getType()));
-        int numberOfEntityType = scanner.nextInt(); //Выбрали нужное животное или растение
-        EntityType currentEntityType = entityTypeMap.get(numberOfEntityType);
-        //double weight, int count, int speed, double maxKg
-        double weight = 0.0, maxKg = 0.0;
-        int count = 0, speed = 0;
+        do {
+            System.out.println(CHOOSE_FROM_LIST);
+            intNumber = safeIntegerRead(reader);
+        } while (!entityTypeMap.containsKey(intNumber));
+        EntityType currentEntityType = entityTypeMap.get(intNumber);
+        Entity currentEntity = entityCharacteristicConfig.getEntityMapConfig().get(currentEntityType);
+        int maxCountText = 0;
+        if (currentEntity instanceof Mouse) maxCountText = 500;
+        else if (currentEntity instanceof Caterpillar) maxCountText = 1100;
+        else if (currentEntity instanceof Predator) maxCountText = 35;
+        else if (currentEntity instanceof Herbivore || currentEntity instanceof Plant) maxCountText = 200;
+        double weight, maxKg = 0.0;
+        int count, speed = 0;
         System.out.printf(SET_WEIGHT, currentEntityType.getType());
-        weight = scanner.nextDouble();
-        System.out.printf(SET_COUNT, currentEntityType.getType());
-        count = scanner.nextInt();
+        weight = safeDoubleRead(reader);
+        System.out.printf(SET_COUNT, currentEntityType.getType(), maxCountText);
+        count = safeIntegerRead(reader);
 
         if (entityClass == Predator.class || entityClass == Herbivore.class) {
             System.out.printf(SET_SPEED, currentEntityType.getType());
-            speed = scanner.nextInt();
+            speed = safeIntegerRead(reader);
             System.out.printf(SET_KG_TO_FULL, currentEntityType.getType());
-            maxKg = scanner.nextDouble();
+            maxKg = safeDoubleRead(reader);
         }
 
         setCurrentEntity(entityCharacteristicConfig.getEntityMapConfig().get(currentEntityType), weight, count, speed, maxKg);
     }
+
+    private int safeIntegerRead(BufferedReader reader) {
+        while (true) {
+            try {
+                return Integer.parseInt(reader.readLine());
+            } catch (IOException | NumberFormatException e) {
+                System.out.println(INTEGER_PARSE_ERROR);
+            }
+        }
+    }
+
+    private double safeDoubleRead(BufferedReader reader) {
+        while (true) {
+            try {
+                return Double.parseDouble(reader.readLine());
+            } catch (IOException | NumberFormatException e) {
+                System.out.println(DOUBLE_PARSE_ERROR);
+            }
+        }
+    }
+
+    private void safeCloseReader(BufferedReader reader) {
+        try {
+            reader.close();
+        } catch (IOException _) {
+            System.out.println(INPUT_OUTPUT_ERROR);
+        }
+    }
+
+    private void exitGame(BufferedReader reader) {
+        System.out.println(GAME_OVER);
+        safeCloseReader(reader);
+        System.exit(0);
+    }
+
+    private void exitSettings(BufferedReader reader) {
+        System.out.println(EXIT_FROM_SETTINGS);
+        safeCloseReader(reader);
+    }
+
 }

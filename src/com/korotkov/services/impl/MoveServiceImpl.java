@@ -1,11 +1,10 @@
 package com.korotkov.services.impl;
 
 import com.korotkov.models.abstracts.Animal;
-import com.korotkov.models.abstracts.Entity;
 import com.korotkov.models.enums.DirectionType;
 import com.korotkov.models.island.Field;
 import com.korotkov.models.island.Island;
-import com.korotkov.services.MoveService;
+import com.korotkov.services.interfaces.MoveService;
 
 public class MoveServiceImpl implements MoveService {
     private Island island;

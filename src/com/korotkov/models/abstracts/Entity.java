@@ -1,6 +1,8 @@
 package com.korotkov.models.abstracts;
 
 
+import java.util.Objects;
+
 public abstract class Entity {
     protected Double weight;
     protected Integer maxCountOnField;
@@ -56,5 +58,19 @@ public abstract class Entity {
     public void setKgToGetFull(Double kgToGetFull) {
         if (kgToGetFull > 0) this.kgToGetFull = kgToGetFull;
     }
+
+   /* @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (this == obj) return true;
+        if (obj.getClass() != this.getClass()) return false;
+        Entity entity = (Entity) obj;
+        return Objects.equals(weight, entity.getWeight()) && Objects.equals(maxCountOnField, entity.getMaxCountOnField()) && Objects.equals(speed, entity.getSpeed()) && Objects.equals(kgToGetFull, entity.getKgToGetFull());
+    }*/
+
+    /*@Override
+    public int hashCode() {
+        return Objects.hash(weight, maxCountOnField, speed, kgToGetFull);
+    }*/
 }
 

@@ -16,9 +16,4 @@ public abstract class Predator extends Animal {
     public void setMaxCountOnField(Integer maxCountOnField) {
         if (maxCountOnField > 0 && maxCountOnField <= 35) this.maxCountOnField = maxCountOnField;
     }
-
-    @Override
-    public void eat(Entity entity) {
-
-    }
 }

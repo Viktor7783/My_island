@@ -1,9 +1,17 @@
 package com.korotkov.models.abstracts;
 
+import com.korotkov.exceptions.NullAnimalException;
+import com.korotkov.exceptions.WrongAnimalClassExceptions;
 import com.korotkov.models.plants.Plant;
 import com.korotkov.services.interfaces.AnimalActions;
 
+import java.lang.reflect.InvocationTargetException;
+
+import static com.korotkov.config.Constants.*;
+
 public abstract class Animal extends Entity implements AnimalActions {
+    private static long counter = 0;
+    private final long id = ++counter;
 
     private double healthPercent;
     private boolean isMovedInThisLap; // TODO: если животное уже двигалось в этот ход (круг) - то двигать его не нужно
@@ -14,12 +22,16 @@ public abstract class Animal extends Entity implements AnimalActions {
         super(weight, maxCountOnField, speed, kgToGetFull);
         healthPercent = 100;
         isMovedInThisLap = false;
+        isBornNewAnimal = false;
+        isEatInThisLap = false;
     }
 
     protected Animal(Entity entity) {
         super(entity);
         healthPercent = 100;
         isMovedInThisLap = false;
+        isBornNewAnimal = false;
+        isEatInThisLap = false;
     }
 
     public boolean isEatInThisLap() {
@@ -76,8 +88,32 @@ public abstract class Animal extends Entity implements AnimalActions {
     }
 
     @Override
-    public void reproduce() {
-        System.out.println("Animal reproduce"); // Размножаются животные одинаково
+    public Animal reproduce(Animal animalForBorn) {
+        Animal baby = null;
+        if (animalForBorn == null) {
+            try {
+                throw new NullAnimalException();
+            } catch (NullAnimalException e) {
+                System.out.println(NULL_ANIMAL_ERROR);
+            }
+
+        } else if (this.getClass() != animalForBorn.getClass()) {
+            try {
+                throw new WrongAnimalClassExceptions();
+            } catch (WrongAnimalClassExceptions e) {
+                System.out.printf(WRONG_ANIMAL_CLASS_ERROR, this.getClass().getSimpleName(), animalForBorn.getClass().getSimpleName());
+            }
+        } else {
+            try {
+                baby = this.getClass().getDeclaredConstructor(animalForBorn.getClass()).newInstance(animalForBorn);
+                this.setBornNewAnimal(true);
+                animalForBorn.setBornNewAnimal(true);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                     NoSuchMethodException e) {
+                System.out.printf(REPRODUCE_ERROR, this, animalForBorn);
+            }
+        }
+        return baby;
     }
 
     @Override
@@ -93,5 +129,10 @@ public abstract class Animal extends Entity implements AnimalActions {
     public void increaseHealthPercent(Entity entity) {
         this.healthPercent += (entity.getWeight() * 100 / this.kgToGetFull);
         if (this.healthPercent > 100) this.healthPercent = 100;
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + " id: " + id;
     }
 }

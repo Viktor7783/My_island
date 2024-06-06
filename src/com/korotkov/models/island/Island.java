@@ -1,6 +1,8 @@
 package com.korotkov.models.island;
 
+import com.korotkov.config.AnimalConfig;
 import com.korotkov.config.EntityCharacteristicConfig;
+import com.korotkov.config.IslandConfig;
 import com.korotkov.models.abstracts.Animal;
 import com.korotkov.models.abstracts.Entity;
 import com.korotkov.models.enums.EntityType;
@@ -22,6 +24,26 @@ public class Island implements IslandActions {
 
     public Island(Map<Field, List<Entity>> island) {
         this.island = island;
+    }
+
+    @Override
+    public void decreaseAnimalsHealthIfNotEat(AnimalConfig animalConfig) {
+        island.values().forEach(list -> list.forEach(entity -> {
+            if (entity instanceof Animal animal) {
+                if (!animal.isEatInThisLap() && animal.getHealthPercent() > 0)
+                    animal.decreaseHealthPercent(animalConfig.getPercentsToRemove());
+            }
+        }));
+    }
+
+    @Override
+    public void restoreEatAndBornState() {
+        island.values().forEach(list -> list.forEach(entity -> {
+            if (entity instanceof Animal animal) {
+                if (animal.isBornNewAnimal()) animal.setBornNewAnimal(false);
+                if (animal.isEatInThisLap()) animal.setEatInThisLap(false);
+            }
+        }));
     }
 
     @Override

@@ -45,39 +45,35 @@ public class Main {
         updateSettingsService.updateSettings();
         System.out.println(GO_GO_GO);
         Island island = createIsland(islandConfig);
-        //Заполняем остров животными и растениями
-        island.getIsland().values()
-                .forEach(list -> List.of(EntityType.values())
-                        .forEach(currentEntityType -> IntStream.range(0, random.nextInt(getMaxCountOnField(entityCharacteristicConfig, currentEntityType)))
-                                .forEach(_ -> list.add(createCurrentEntity(entityCharacteristicConfig, currentEntityType)))));
-
+        fillIslandAnimalsAndPlants(island, random, entityCharacteristicConfig); //Заполняем остров животными и растениями
         MoveService moveService = new MoveServiceImpl(island);
         int daysOfLive = islandConfig.getDaysOfLife();
         //Цикл начинается здесь!!! (несколько конов)
-        while (daysOfLive > 0) { //Или пока все животные не умрут?
+        while (daysOfLive > 0) { //TODO: Вынести в один метод (жизнь животных и растений) Или пока все животные не умрут?!?!
             island.removeDeathAnimal(); // Удаляем мертвечину (Те животные у кого health<=0)
             island.removeEatenPlants(); // Удаляем пожранные растения (isEaten = true)
             island.refillPlants(entityCharacteristicConfig, random);// Подсаживаем растения за один кон
-            for (Map.Entry<Field, List<Entity>> fieldListEntry : island.getIsland().entrySet()) { //TODO: Вынести в один метод (жизнь животных)
+            island.restoreEatAndBornState(); //обнуляем eat (если ел) и isBornNewAnimal() в начале кона!!!
+
+            for (Map.Entry<Field, List<Entity>> fieldListEntry : island.getIsland().entrySet()) {
                 Field field = fieldListEntry.getKey();
-                List<Animal> animals = fieldListEntry.getValue().stream().filter(entity -> entity instanceof Animal && ((Animal) entity).getHealthPercent() > 0).map(e -> (Animal) e).toList();
-                List<Plant> plants = fieldListEntry.getValue().stream().filter(entity -> entity instanceof Plant && !((Plant) entity).isEaten()).map(e -> (Plant) e).toList();
+                List<Entity> entities = fieldListEntry.getValue();
+                List<Animal> animals = entities.stream().filter(entity -> entity instanceof Animal && ((Animal) entity).getHealthPercent() > 0).map(e -> (Animal) e).toList();
+                List<Plant> plants = entities.stream().filter(entity -> entity instanceof Plant && !((Plant) entity).isEaten()).map(e -> (Plant) e).toList();
                 for (Animal animal : animals) {
+                    if (animal.isBornNewAnimal()) continue;
                     Action action = Action.values()[random.nextInt(Action.values().length)];
                     switch (action) {
                         case MOVE -> //TODO: иди придумай как конкретно мы будем двигаться!?!
                                 moveAnimal(animal, chooseDirectionServiceImpl, entityCharacteristicConfig, moveService, field);
                         case EAT -> feedAnimal(animal, random, animals, possibilityOfEatingConfig, plants);
-                        case REPRODUCE -> {
-                            //TODO Как будем размножаться, господа?
-
-                        }
+                        case REPRODUCE -> reproduceAnimal(entities, animal, animals);
                     }
-                    if (!animal.isEatInThisLap()) //Если ничего не жрамши = -20%
-                        animal.decreaseHealthPercent(animalConfig.getPercentsToRemove());
-                    else animal.setEatInThisLap(false);
                 }
             }
+
+            island.decreaseAnimalsHealthIfNotEat(animalConfig); //уменьшаем здоровье непоевшим в конце кона! через island!
+            --daysOfLive; // День прошёл
 
             //TODO Вывод статистики в конце каждого кона (Сбор статистики идет для всех животных + трава)
             // Каждый ход собирается статистика:
@@ -85,9 +81,29 @@ public class Main {
             // сколько животных умерло от голода/были съедены
             // сколько родилось новых животных
             // разница между первым ходом и текущим по кол-ву животных
-            --daysOfLive;
+
         }
         System.out.println(island); // DELETE
+    }
+
+    private static void reproduceAnimal(List<Entity> entities, Animal animal, List<Animal> animals) {
+        List<Animal> currentAnimals = animals.stream().filter(a -> a.getClass() == animal.getClass() && a.getHealthPercent() > 0).toList();
+        Optional<Animal> optionalAnimal = (currentAnimals.stream().filter(a -> a != animal && !a.isBornNewAnimal()).findFirst());
+        if (optionalAnimal.isPresent() && !animal.isBornNewAnimal()) {
+            Animal baby = animal.reproduce(optionalAnimal.get()); // Если не null - то попытка родить получилась!
+            if (currentAnimals.size() < animal.getMaxCountOnField() && baby != null) {
+                entities.add(baby);// Если добавили животное - то успешно родили ребенка!!!
+            }
+        }
+    }
+
+    // TODO: Продумать за что отвечает island а за что отвечает Game_Of_Island
+
+    private static void fillIslandAnimalsAndPlants(Island island, Random random, EntityCharacteristicConfig entityCharacteristicConfig) {
+        island.getIsland().values()
+                .forEach(list -> List.of(EntityType.values())
+                        .forEach(currentEntityType -> IntStream.range(0, random.nextInt(getMaxCountOnField(entityCharacteristicConfig, currentEntityType)))
+                                .forEach(_ -> list.add(createCurrentEntity(entityCharacteristicConfig, currentEntityType)))));
     }
 
     private static void feedAnimal(Animal animal, Random random, List<Animal> animals, PossibilityOfEatingConfig possibilityOfEatingConfig, List<Plant> plants) {
@@ -198,3 +214,4 @@ class MyTestClass { //TODO: Удалить перед pullRequest!!!
         }
     }
 }
+

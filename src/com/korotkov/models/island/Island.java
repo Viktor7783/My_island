@@ -37,11 +37,12 @@ public class Island implements IslandActions {
     }
 
     @Override
-    public void restoreEatAndBornState() {
+    public void restoreEatMoveBornState() {
         island.values().forEach(list -> list.forEach(entity -> {
             if (entity instanceof Animal animal) {
                 if (animal.isBornNewAnimal()) animal.setBornNewAnimal(false);
                 if (animal.isEatInThisLap()) animal.setEatInThisLap(false);
+                if (animal.isMovedInThisLap()) animal.setMovedInThisLap(false);
             }
         }));
     }

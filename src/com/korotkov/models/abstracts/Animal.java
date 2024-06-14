@@ -1,11 +1,17 @@
 package com.korotkov.models.abstracts;
 
+import com.korotkov.config.PossibilityOfEatingConfig;
 import com.korotkov.exceptions.NullAnimalException;
 import com.korotkov.exceptions.WrongAnimalClassExceptions;
+import com.korotkov.models.enums.DirectionType;
+import com.korotkov.models.herbivores.Herbivore;
 import com.korotkov.models.plants.Plant;
+import com.korotkov.services.impl.ChooseDirectionServiceImpl;
 import com.korotkov.services.interfaces.AnimalActions;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.korotkov.config.Constants.*;
 
@@ -14,7 +20,7 @@ public abstract class Animal extends Entity implements AnimalActions {
     private final long id = ++counter;
 
     private double healthPercent;
-    private boolean isMovedInThisLap; // TODO: если животное уже двигалось в этот ход (круг) - то двигать его не нужно
+    private boolean isMovedInThisLap;
     private boolean isBornNewAnimal;
     private boolean isEatInThisLap;
 
@@ -66,63 +72,89 @@ public abstract class Animal extends Entity implements AnimalActions {
         return isMovedInThisLap;
     }
 
-    /*Животные могут:
-    есть растения и/или других животных (если в их локации есть подходящая еда),
-    передвигаться (в соседние локации),
-    размножаться (при наличии пары в их локации),
-    умирать от голода или быть съеденными.
-*/
-    // TODO В конкретных классах того или иного вида можно дорабатывать все методы под особенности животного.
-
-
     @Override
-    public void eat(Entity entity) {
-        if (entity instanceof Plant plant) {
-            increaseHealthPercent(plant);
-            plant.setEaten(true);
-        } else if (entity instanceof Animal animal) {
-            increaseHealthPercent(animal);
-            animal.setHealthPercent(0);
+    public void eat(List<Entity> entities, PossibilityOfEatingConfig possibilityOfEatingConfig, Random random) {
+        eatAnimal(entities, possibilityOfEatingConfig, random);
+        eatPlant(entities, random);
+    }
+
+    private void eatPlant(List<Entity> entities, Random random) {
+        if (this instanceof Herbivore) {
+            int countOfEatPlants = random.nextInt(1, 4);
+            List<Plant> plants = entities.stream().filter(e -> e instanceof Plant).map(e -> (Plant) e).filter(p -> !p.isEaten()).toList();
+            for (Plant plantToEat : plants) {
+                this.increaseHealthPercent(plantToEat);
+                plantToEat.setEaten(true);
+                this.isEatInThisLap = true;
+                --countOfEatPlants;
+                if (countOfEatPlants < 1) break;
+            }
         }
-        this.isEatInThisLap = true;
+    }
+
+    private void eatAnimal(List<Entity> entities, PossibilityOfEatingConfig possibilityOfEatingConfig, Random random) {
+        int randomPercent = random.nextInt(1, 101); //выпало 10: проверить что можнор съесть! Число 0 -нельзя съесть!
+        List<Animal> animals = entities.stream().filter(e -> e instanceof Animal).map(e -> (Animal) e).filter(a -> a.getHealthPercent() > 0).toList();//Животные для поедания
+        Set<Class<? extends Animal>> toBeEatenAnimalsClasses = animals.stream().map(Animal::getClass).collect(Collectors.toSet());//Набор классов животных для поедания
+        Map<Map<Entity, Entity>, Long> animalEatPossibilities = possibilityOfEatingConfig.getPossibilityOfEating().entrySet().stream()
+                .filter(pair -> {
+                    Map.Entry<Entity, Entity> eatEntities = pair.getKey().entrySet().iterator().next();
+                    return eatEntities.getKey().getClass() == this.getClass() && toBeEatenAnimalsClasses.contains(eatEntities.getValue().getClass()) && randomPercent <= pair.getValue();
+                }) //Фильтруем пары с нашим хищником и жертвой и возможностью поедания > 0
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        if (!animalEatPossibilities.isEmpty()) { // Если Кабан и есть мышь и  гусеница покушать:
+            Animal bestAnimalToEat = (Animal) (animalEatPossibilities.entrySet().stream()
+                    .min((pair1, pair2) -> Math.toIntExact(pair1.getValue() - pair2.getValue()))
+                    .get().getKey().entrySet().iterator().next().getValue());// Нашли гусеницу или мышь
+            int from = 1, to = 2;
+            if (bestAnimalToEat instanceof Insect) {
+                from = 50;
+                to = 101;
+            } else if (bestAnimalToEat instanceof Rodent) {
+                from = 20;
+                to = 51;
+            }
+            int countOfEatAnimals = random.nextInt(from, to);
+            for (Animal animalToEat : animals) {
+                if (animalToEat != this && animalToEat.getClass() == bestAnimalToEat.getClass() && animalToEat.getHealthPercent() > 0) {
+                    this.increaseHealthPercent(animalToEat);
+                    animalToEat.setHealthPercent(0);
+                    this.isEatInThisLap = true;
+                    --countOfEatAnimals;
+                }
+                if (countOfEatAnimals < 1) break;
+            }
+        }
     }
 
     @Override
-    public Animal reproduce(Animal animalForBorn) {
+    public Animal reproduce(List<Entity> entities) {
         Animal baby = null;
-        if (animalForBorn == null) {
-            try {
-                throw new NullAnimalException();
-            } catch (NullAnimalException e) {
-                System.out.println(NULL_ANIMAL_ERROR);
-            }
-
-        } else if (this.getClass() != animalForBorn.getClass()) {
-            try {
-                throw new WrongAnimalClassExceptions();
-            } catch (WrongAnimalClassExceptions e) {
-                System.out.printf(WRONG_ANIMAL_CLASS_ERROR, this.getClass().getSimpleName(), animalForBorn.getClass().getSimpleName());
-            }
-        } else {
-            try {
-                baby = this.getClass().getDeclaredConstructor(animalForBorn.getClass()).newInstance(animalForBorn);
-                this.setBornNewAnimal(true);
-                animalForBorn.setBornNewAnimal(true);
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-                     NoSuchMethodException e) {
-                System.out.printf(REPRODUCE_ERROR, this, animalForBorn);
+        List<Animal> currentAnimals = entities.stream().filter(e -> e.getClass() == this.getClass()).map(e -> (Animal) e).filter(a -> a.getHealthPercent() > 0).toList();
+        Optional<Animal> optionalAnimal = (currentAnimals.stream().filter(a -> a != this && !a.isBornNewAnimal()).findFirst());
+        if (optionalAnimal.isPresent() && !this.isBornNewAnimal()) {
+            Animal animalForBorn = optionalAnimal.get();
+            this.setBornNewAnimal(true); //Попытка была
+            animalForBorn.setBornNewAnimal(true);
+            if (currentAnimals.size() < this.getMaxCountOnField()) {
+                try {
+                    baby = this.getClass().getDeclaredConstructor(Entity.class).newInstance(animalForBorn);
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                         NoSuchMethodException e) {
+                    System.out.printf(REPRODUCE_ERROR, this, animalForBorn);
+                }
             }
         }
         return baby;
     }
 
     @Override
-    public void chooseDirection() {
-        System.out.println("Animal choose direction"); // Выбирают движения все животные одинаково
+    public DirectionType chooseDirection(Random random) {
+        return DirectionType.values()[random.nextInt(DirectionType.values().length)];
     }
 
 
-    public void decreaseHealthPercent(int decreaseFor) { // каждый день уменьшаем на 20%
+    public void decreaseHealthPercent(int decreaseFor) {
         this.healthPercent -= decreaseFor;
     }
 

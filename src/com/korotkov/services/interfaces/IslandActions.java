@@ -12,7 +12,7 @@ public interface IslandActions {
 
     void refillPlants(EntityCharacteristicConfig entityCharacteristicConfig, Random random);
 
-    void restoreEatAndBornState();
+    void restoreEatMoveBornState();
 
     void decreaseAnimalsHealthIfNotEat(AnimalConfig animalConfig);
 

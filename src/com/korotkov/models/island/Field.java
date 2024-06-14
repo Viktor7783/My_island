@@ -1,8 +1,8 @@
 package com.korotkov.models.island;
 
 public class Field {
-    private int x;
-    private int y;
+    private int x; // - строка (Height)
+    private int y; // - столбец (Width)
 
     public Field(int x, int y) {
         this.x = x;
@@ -15,5 +15,10 @@ public class Field {
 
     public int getY() {
         return y;
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + ": X = " + getX() + " Y = " + getY();
     }
 }

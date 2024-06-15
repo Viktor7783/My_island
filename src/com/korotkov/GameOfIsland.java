@@ -7,48 +7,60 @@ import com.korotkov.config.IslandConfig;
 import com.korotkov.config.PossibilityOfEatingConfig;
 import com.korotkov.models.abstracts.Animal;
 import com.korotkov.models.abstracts.Entity;
-import com.korotkov.models.abstracts.Insect;
-import com.korotkov.models.abstracts.Rodent;
 import com.korotkov.models.enums.Action;
-import com.korotkov.models.enums.DirectionType;
 import com.korotkov.models.enums.EntityType;
-import com.korotkov.models.herbivores.*;
 import com.korotkov.models.island.Field;
 import com.korotkov.models.island.Island;
-import com.korotkov.models.plants.Plant;
+import com.korotkov.services.impl.CollectAndDisplayStatisticsServiceImpl;
+import com.korotkov.services.interfaces.CollectAndDisplayStatisticsService;
 import com.korotkov.services.interfaces.MoveService;
-import com.korotkov.services.impl.ChooseDirectionServiceImpl;
 import com.korotkov.services.impl.MoveServiceImpl;
 import com.korotkov.services.impl.UpdateSettingsService;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.korotkov.config.Constants.*;
 
-public class Main {
+public class GameOfIsland {
+    private final Random random;
+    private final EntityCharacteristicConfig entityCharacteristicConfig;
+    private final PossibilityOfEatingConfig possibilityOfEatingConfig;
+    private final IslandConfig islandConfig;
+    private final AnimalConfig animalConfig;
+    private final UpdateSettingsService updateSettingsService;
+    private Island island;
+    private MoveService moveService;
+    private CollectAndDisplayStatisticsServiceImpl collectAndDisplayStatisticsService;
+    private int daysOfLife;
 
+    public GameOfIsland() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        random = new Random();
+        entityCharacteristicConfig = new EntityCharacteristicConfig(objectMapper, PATH_TO_ENTITY_CHARACTERISTIC);
+        possibilityOfEatingConfig = new PossibilityOfEatingConfig(objectMapper, PATH_TO_POSSIBILITY_OF_EATING, entityCharacteristicConfig.getEntityMapConfig());
+        islandConfig = new IslandConfig(PATH_TO_ISLAND_SETTINGS);
+        animalConfig = new AnimalConfig(PATH_TO_ISLAND_SETTINGS);
+        updateSettingsService = new UpdateSettingsService(islandConfig, entityCharacteristicConfig);
+    }
 
     public static void main(String[] args) {
+        new GameOfIsland().start();
+    }
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        Random random = new Random();
-        EntityCharacteristicConfig entityCharacteristicConfig = new EntityCharacteristicConfig(objectMapper, PATH_TO_ENTITY_CHARACTERISTIC);
-        PossibilityOfEatingConfig possibilityOfEatingConfig = new PossibilityOfEatingConfig(objectMapper, PATH_TO_POSSIBILITY_OF_EATING, entityCharacteristicConfig.getEntityMapConfig());
-        IslandConfig islandConfig = new IslandConfig(PATH_TO_ISLAND_SETTINGS);
-        AnimalConfig animalConfig = new AnimalConfig(PATH_TO_ISLAND_SETTINGS);
-        UpdateSettingsService updateSettingsService = new UpdateSettingsService(islandConfig, entityCharacteristicConfig);
+    public void start() {
         updateSettingsService.updateSettings();
         System.out.println(GO_GO_GO);
-        Island island = createIsland(islandConfig);
-        fillIslandAnimalsAndPlants(island, random, entityCharacteristicConfig); //Заполняем остров животными и растениями
-        MoveService moveService = new MoveServiceImpl(island, islandConfig);
-        int daysOfLive = islandConfig.getDaysOfLife();
+        island = createIsland(islandConfig);
+        fillIslandAnimalsAndPlants(island, random, entityCharacteristicConfig);
+        moveService = new MoveServiceImpl(island, islandConfig);
+        collectAndDisplayStatisticsService = new CollectAndDisplayStatisticsServiceImpl(island);
+        daysOfLife = islandConfig.getDaysOfLife();
+
         //Цикл начинается здесь!!! (несколько конов)
-        while (daysOfLive > 0) { //TODO: Вынести в один метод (жизнь животных и растений) Или пока все животные не умрут?!?!
+        while (daysOfLife > 0) { //TODO: Вынести в один метод (жизнь животных и растений) Или пока все животные не умрут?!?!
             island.removeDeathAnimal(); // Удаляем мертвечину (Те животные у кого health<=0)
             island.removeEatenPlants(); // Удаляем пожранные растения (isEaten = true)
             island.refillPlants(entityCharacteristicConfig, random);// Подсаживаем растения за один кон
@@ -71,10 +83,7 @@ public class Main {
                                 case EAT -> animal.eat(entities, possibilityOfEatingConfig, random);
                                 case REPRODUCE -> {
                                     Animal baby = animal.reproduce(entities); // Мы можем только рожать, не можем добавлять на остров
-                                    if (baby != null) {
-                                        entityListIterator.add(baby);
-                                        //++countBornAnimals;
-                                    }
+                                    if (baby != null) entityListIterator.add(baby);
                                 }
                             }
                         }
@@ -82,29 +91,13 @@ public class Main {
                 }
             }
             island.decreaseAnimalsHealthIfNotEat(animalConfig); //уменьшаем здоровье непоевшим в конце кона! через island!
-            --daysOfLive; // День прошёл
+            --daysOfLife; // День прошёл
             //TODO Вывод статистики в конце каждого кона (Сбор статистики идет для всех животных + трава)
-            // Каждый ход собирается статистика:
-            // сколько животных осталось на текущий момент и травы ( если все подохли - конец циклу 365 дней)
-            // сколько животных умерло от голода/были съедены
-            // сколько родилось новых животных
-            // разница между первым ходом и текущим по кол-ву животных
-            int countLiveAnimals; // Всё это делаем в одном цикле!
-            int totalCountLiveAnimals;
-            int countLivePlants;
-            int totalCountLivePlants;
-            int countDeathAnimal;
-            int countEatPlants;
-            int countBornAnimals;
-            int totalDifferenceLiveAnimals; // = totalCountLiveAnimals-firstDayCountLiveAnimals
-            int firstDayCountLiveAnimals;
-            int totalDifferenceLivePlants; // = totalCountLivePlants-firstDayCountLivePlants
-            int firstDayCountLivePlants;
-            System.out.println(island); // DELETE
+            collectAndDisplayStatisticsService.start();
         }
     }
 
-    private static void fillIslandAnimalsAndPlants(Island island, Random random, EntityCharacteristicConfig
+    private void fillIslandAnimalsAndPlants(Island island, Random random, EntityCharacteristicConfig
             entityCharacteristicConfig) {
         island.getIsland().values()
                 .forEach(list -> List.of(EntityType.values())
@@ -113,7 +106,7 @@ public class Main {
     }
 
 
-    private static Entity createCurrentEntity(EntityCharacteristicConfig entityCharacteristicConfig, EntityType
+    private Entity createCurrentEntity(EntityCharacteristicConfig entityCharacteristicConfig, EntityType
             currentEntityType) {
         Entity currentEntity = null;
         Class clazz = currentEntityType.getClazz();
@@ -133,16 +126,16 @@ public class Main {
     }
 
 
-    private static Integer getMaxCountOnField(EntityCharacteristicConfig entityCharacteristicConfig, EntityType
+    private Integer getMaxCountOnField(EntityCharacteristicConfig entityCharacteristicConfig, EntityType
             entityType) {
         return entityCharacteristicConfig.getEntityMapConfig().get(entityType).getMaxCountOnField();
     }
 
-    private static Integer getSpeed(EntityCharacteristicConfig entityCharacteristicConfig, EntityType entityType) {
+    private Integer getSpeed(EntityCharacteristicConfig entityCharacteristicConfig, EntityType entityType) {
         return entityCharacteristicConfig.getEntityMapConfig().get(entityType).getSpeed();
     }
 
-    private static Island createIsland(IslandConfig islandConfig) {
+    private Island createIsland(IslandConfig islandConfig) {
         Map<Field, List<Entity>> island = new HashMap<>();
         for (int i = 0; i < islandConfig.getHeight(); i++) {
             for (int j = 0; j < islandConfig.getWidth(); j++) {
@@ -168,6 +161,11 @@ class MyTestClass { //TODO: Удалить перед pullRequest!!!
         List<Integer> sList = list.stream().filter(n -> n % 2 == 0).toList();
 
         ListIterator<Integer> listIterator = list.listIterator();
+
+        int count = 8;
+        count /= 2;
+        System.out.println(count);
+        System.out.println(Math.abs(-8));
 
 
     }

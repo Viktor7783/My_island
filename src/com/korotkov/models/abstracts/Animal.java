@@ -81,11 +81,12 @@ public abstract class Animal extends Entity implements AnimalActions {
     private void eatPlant(List<Entity> entities, Random random) {
         if (this instanceof Herbivore) {
             int countOfEatPlants = random.nextInt(1, 4);
+            if (this instanceof Rodent || this instanceof Insect) countOfEatPlants = 1;
             List<Plant> plants = entities.stream().filter(e -> e instanceof Plant).map(e -> (Plant) e).filter(p -> !p.isEaten()).toList();
             for (Plant plantToEat : plants) {
                 this.increaseHealthPercent(plantToEat);
                 plantToEat.setEaten(true);
-                this.isEatInThisLap = true;
+                if (!this.isEatInThisLap) this.isEatInThisLap = true;
                 --countOfEatPlants;
                 if (countOfEatPlants < 1) break;
             }
@@ -93,19 +94,19 @@ public abstract class Animal extends Entity implements AnimalActions {
     }
 
     private void eatAnimal(List<Entity> entities, PossibilityOfEatingConfig possibilityOfEatingConfig, Random random) {
-        int randomPercent = random.nextInt(1, 101); //выпало 10: проверить что можнор съесть! Число 0 -нельзя съесть!
+        int randomPercent = random.nextInt(1, 101);
         List<Animal> animals = entities.stream().filter(e -> e instanceof Animal).map(e -> (Animal) e).filter(a -> a.getHealthPercent() > 0).toList();//Животные для поедания
         Set<Class<? extends Animal>> toBeEatenAnimalsClasses = animals.stream().map(Animal::getClass).collect(Collectors.toSet());//Набор классов животных для поедания
         Map<Map<Entity, Entity>, Long> animalEatPossibilities = possibilityOfEatingConfig.getPossibilityOfEating().entrySet().stream()
                 .filter(pair -> {
                     Map.Entry<Entity, Entity> eatEntities = pair.getKey().entrySet().iterator().next();
                     return eatEntities.getKey().getClass() == this.getClass() && toBeEatenAnimalsClasses.contains(eatEntities.getValue().getClass()) && randomPercent <= pair.getValue();
-                }) //Фильтруем пары с нашим хищником и жертвой и возможностью поедания > 0
+                })
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        if (!animalEatPossibilities.isEmpty()) { // Если Кабан и есть мышь и  гусеница покушать:
+        if (!animalEatPossibilities.isEmpty()) {
             Animal bestAnimalToEat = (Animal) (animalEatPossibilities.entrySet().stream()
                     .min((pair1, pair2) -> Math.toIntExact(pair1.getValue() - pair2.getValue()))
-                    .get().getKey().entrySet().iterator().next().getValue());// Нашли гусеницу или мышь
+                    .get().getKey().entrySet().iterator().next().getValue());
             int from = 1, to = 2;
             if (bestAnimalToEat instanceof Insect) {
                 from = 50;

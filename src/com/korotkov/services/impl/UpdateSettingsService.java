@@ -192,7 +192,7 @@ public class UpdateSettingsService {
         if (currentEntity instanceof Mouse) maxCountText = 500;
         else if (currentEntity instanceof Caterpillar) maxCountText = 1100;
         else if (currentEntity instanceof Predator) maxCountText = 35;
-        else if (currentEntity instanceof Herbivore || currentEntity instanceof Plant) maxCountText = 200;
+        else if (currentEntity instanceof Herbivore || currentEntity instanceof Plant) maxCountText = 500;
         double weight, maxKg = 0.0;
         int count, speed = 0;
         System.out.printf(SET_WEIGHT, currentEntityType.getType());

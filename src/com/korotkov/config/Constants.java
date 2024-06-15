@@ -7,6 +7,7 @@ public class Constants {
 
     public static final String CHANGE_SETTINGS = """
             ***********************************************************************
+            Добро пожаловать в игру GAME_OF_ISLAND!
             Хотите внести изменения в настройки игры?
             1 - Да
             2 - Нет
@@ -148,7 +149,7 @@ public class Constants {
             """;
     public static final String SET_KG_TO_FULL = """
             #######################################################################
-            Пожалуйста введите количество килограмм пищи 
+            Пожалуйста введите количество килограмм пищи
             до полного насыщения для %s (double-число):
             #######################################################################
             """;
@@ -224,6 +225,25 @@ public class Constants {
             не получилось создать новый экземпляр животного!
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             """;
+
+    public static final String STATISTIC_OF_DAY = """
+            ***********************************************************************
+             Статистика за прошедший день № %d:
+            """;
+    public static final String LIVE_ANIMALS = "На острове живут %d животных\n";
+    public static final String BORN_ANIMALS = "Родились %d животных\n";
+    public static final String DEATH_ANIMALS = "Умерло %d животных\n";
+    public static final String LIVE_PLANTS = "Растут %d растений\n";
+    public static final String EAT_PLANTS = "Съедено %d растений\n";
+    public static final String DIFFERENCE = "Разница между первым и текущим днём:";
+    public static final String MORE_ANIMALS = "Животных стало больше на %d особей\n";
+    public static final String LESS_ANIMALS = "Животных стало меньше на %d особей\n";
+    public static final String NO_CHANGES_ANIMALS = "Количество животных не изменилось";
+    public static final String MORE_PLANTS = "Растений стало больше на %d штук\n";
+    public static final String LESS_PLANTS = "Растений стало меньше на %d штук\n";
+    public static final String NO_CHANGES_PLANTS = "Количество растений не изменилось";
+    public static final String END = "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&";
+
     public static final String GAME_OVER = """
             $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
             <<< !!! GAME OVER !!! >>>

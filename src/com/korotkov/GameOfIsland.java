@@ -9,10 +9,11 @@ import com.korotkov.models.abstracts.Animal;
 import com.korotkov.models.abstracts.Entity;
 import com.korotkov.models.enums.Action;
 import com.korotkov.models.enums.EntityType;
+import com.korotkov.models.herbivores.Caterpillar;
 import com.korotkov.models.island.Field;
 import com.korotkov.models.island.Island;
+import com.korotkov.models.plants.Grass;
 import com.korotkov.services.impl.CollectAndDisplayStatisticsServiceImpl;
-import com.korotkov.services.interfaces.CollectAndDisplayStatisticsService;
 import com.korotkov.services.interfaces.MoveService;
 import com.korotkov.services.impl.MoveServiceImpl;
 import com.korotkov.services.impl.UpdateSettingsService;
@@ -51,12 +52,13 @@ public class GameOfIsland {
     }
 
     public void start() {
+        System.out.println(GREETINGS);
         updateSettingsService.updateSettings();
         System.out.println(GO_GO_GO);
         island = createIsland(islandConfig);
         fillIslandAnimalsAndPlants(island, random, entityCharacteristicConfig);
         moveService = new MoveServiceImpl(island, islandConfig);
-        collectAndDisplayStatisticsService = new CollectAndDisplayStatisticsServiceImpl(island);
+        collectAndDisplayStatisticsService = new CollectAndDisplayStatisticsServiceImpl(island, updateSettingsService);
         daysOfLife = islandConfig.getDaysOfLife();
 
         //Цикл начинается здесь!!! (несколько конов)
@@ -96,6 +98,7 @@ public class GameOfIsland {
             collectAndDisplayStatisticsService.start();
         }
     }
+
 
     private void fillIslandAnimalsAndPlants(Island island, Random random, EntityCharacteristicConfig
             entityCharacteristicConfig) {
@@ -149,24 +152,18 @@ public class GameOfIsland {
 
 class MyTestClass { //TODO: Удалить перед pullRequest!!!
     public static void main(String[] args) {
-        List<Integer> list = new ArrayList<>();
-        list.add(1);
-        list.add(2);
-        list.add(3);
-        list.add(4);
-        list.add(5);
-        list.add(6);
-        list.add(7);
-        list.add(8);
-        List<Integer> sList = list.stream().filter(n -> n % 2 == 0).toList();
+        Caterpillar caterpillar = new Caterpillar(0.01, 1000, 0, 0.0);
+        Grass grass = new Grass(1.0, 200, 0, 0.0);
+        caterpillar.increaseHealthPercent(grass);
+        System.out.println(caterpillar.getKgToGetFull());
+        double fin = 30.4;
+        fin += 0.01 * 100 / 0.0;
+        if (fin > 100.0) fin = 100.0;
+        System.out.println(fin);
 
-        ListIterator<Integer> listIterator = list.listIterator();
-
-        int count = 8;
-        count /= 2;
-        System.out.println(count);
-        System.out.println(Math.abs(-8));
-
+        double finMouse = 33.1;
+        finMouse += (0.01 * 100 / 0.01);
+        System.out.println(finMouse);
 
     }
 }

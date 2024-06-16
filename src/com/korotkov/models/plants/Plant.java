@@ -23,7 +23,7 @@ public abstract class Plant extends Entity {
 
     @Override
     public void setMaxCountOnField(Integer maxCountOnField) {
-        if (maxCountOnField > 0 && maxCountOnField <= 200) this.maxCountOnField = maxCountOnField;
+        if (maxCountOnField > 0 && maxCountOnField <= 500) this.maxCountOnField = maxCountOnField;
     }
 
     @Override

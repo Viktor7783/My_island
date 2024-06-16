@@ -16,15 +16,6 @@ public class Caterpillar extends Herbivore implements Insect {
         super(0.0, 0, 0, 0.0);
     }
 
-    @Override
-    public void setSpeed(Integer speed) {
-        this.speed = 0;
-    }
-
-    @Override
-    public void setKgToGetFull(Double kgToGetFull) {
-        super.setKgToGetFull(0.0);
-    }
 
     @Override
     public void setMaxCountOnField(Integer maxCountOnField) {

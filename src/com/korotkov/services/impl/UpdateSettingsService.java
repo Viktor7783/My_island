@@ -24,6 +24,7 @@ public class UpdateSettingsService {
     private final EntityCharacteristicConfig entityCharacteristicConfig;
     private final BufferedReader reader;
     private int intNumber;
+    private int numberOfStopCondition;
 
     public UpdateSettingsService(IslandConfig islandConfig, EntityCharacteristicConfig entityCharacteristicConfig) {
         this.islandConfig = islandConfig;
@@ -41,7 +42,8 @@ public class UpdateSettingsService {
                 switch (intNumber) {
                     case 1 -> changeIslandSettings();
                     case 2 -> changeEntitySettings();
-                    case 3 -> {
+                    case 3 -> setConditionsForStopGame();
+                    case 4 -> {
                         exitSettings(reader);
                         return;
                     }
@@ -51,6 +53,24 @@ public class UpdateSettingsService {
         } else if (intNumber == 2) {
             exitSettings(reader);
         } else exitGame(reader);
+    }
+
+    private void setConditionsForStopGame() {
+        System.out.println(CHOOSE_STOP_CONDITIONS);
+        int intNumber = safeIntegerRead(reader);
+        switch (intNumber) {
+            case 1 -> numberOfStopCondition = 1;// Умерли все животные
+            case 2 -> numberOfStopCondition = 2; // Умерли все хищники
+            case 3 -> numberOfStopCondition = 3; // Умерли все травоядные
+            case 4 -> {
+            } //Выход в главное меню настроек
+            default -> exitGame(reader);
+        }
+
+    }
+
+    public int getNumberOfStopCondition() {
+        return numberOfStopCondition;
     }
 
     private void changeIslandSettings() {
@@ -125,17 +145,15 @@ public class UpdateSettingsService {
         double maxKg = safeDoubleRead(reader);
 
         if (entityClass == Predator.class) {
-            for (Entity entity : entityCharacteristicConfig.getEntityMapConfig().values()) {
-                if (entity instanceof Predator) {
-                    changeCurrentAnimal((Animal) entity, weight, count, speed, maxKg);
-                }
-            }
+            entityCharacteristicConfig.getEntityMapConfig().values().stream()
+                    .filter(entity -> entity instanceof Predator)
+                    .map(e -> (Animal) e)
+                    .forEach(predator -> changeCurrentAnimal(predator, weight, count, speed, maxKg));
         } else if (entityClass == Herbivore.class) {
-            for (Entity entity : entityCharacteristicConfig.getEntityMapConfig().values()) {
-                if (entity instanceof Herbivore) {
-                    changeCurrentAnimal((Animal) entity, weight, count, speed, maxKg);
-                }
-            }
+            entityCharacteristicConfig.getEntityMapConfig().values().stream()
+                    .filter(entity -> entity instanceof Herbivore)
+                    .map(e -> (Animal) e)
+                    .forEach(herbivore -> changeCurrentAnimal(herbivore, weight, count, speed, maxKg));
         }
         System.out.println(SETTINGS_HAVE_BEEN_CHANGED);
     }
@@ -192,7 +210,8 @@ public class UpdateSettingsService {
         if (currentEntity instanceof Mouse) maxCountText = 500;
         else if (currentEntity instanceof Caterpillar) maxCountText = 1100;
         else if (currentEntity instanceof Predator) maxCountText = 35;
-        else if (currentEntity instanceof Herbivore || currentEntity instanceof Plant) maxCountText = 500;
+        else if (currentEntity instanceof Herbivore) maxCountText = 200;
+        else if (currentEntity instanceof Plant) maxCountText = 500;
         double weight, maxKg = 0.0;
         int count, speed = 0;
         System.out.printf(SET_WEIGHT, currentEntityType.getType());
@@ -248,5 +267,4 @@ public class UpdateSettingsService {
         System.out.println(EXIT_FROM_SETTINGS);
         safeCloseReader(reader);
     }
-
 }

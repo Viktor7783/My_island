@@ -90,9 +90,9 @@
     "kgToGetFull": 0.0
   },
   "grass": {
-    "weight": 1,
+    "weight": 1.0,
     "maxCountOnField": 200,
     "speed": 0,
-    "kgToGetFull": 0
+    "kgToGetFull": 0.0
   }
 }

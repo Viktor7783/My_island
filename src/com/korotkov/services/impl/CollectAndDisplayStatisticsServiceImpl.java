@@ -1,14 +1,17 @@
 package com.korotkov.services.impl;
 
 import com.korotkov.models.abstracts.Animal;
+import com.korotkov.models.herbivores.Herbivore;
 import com.korotkov.models.island.Island;
 import com.korotkov.models.plants.Plant;
+import com.korotkov.models.predators.Predator;
 import com.korotkov.services.interfaces.CollectAndDisplayStatisticsService;
 
 import static com.korotkov.config.Constants.*;
 
 public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplayStatisticsService {
     private final Island island;
+    UpdateSettingsService updateSettingsService;
     private int dayNumber;
     private int countLiveAnimals;
     private int firstDayCountLiveAnimals;
@@ -19,16 +22,20 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
     private int countBornAnimals;
     private int totalDifferenceLiveAnimals;
     private int totalDifferenceLivePlants;
+    private int countLivePredators;
+    private int countLiveHerbivores;
     private boolean isFirstDay;
 
-    public CollectAndDisplayStatisticsServiceImpl(Island island) {
+    public CollectAndDisplayStatisticsServiceImpl(Island island, UpdateSettingsService updateSettingsService) {
         this.island = island;
+        this.updateSettingsService = updateSettingsService;
         this.isFirstDay = true;
     }
 
     public void start() {
         collectStatistics();
         printStatistics();
+        checkStopGame();
         resetLapValues();
     }
 
@@ -41,8 +48,11 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
             } else if (entity instanceof Animal animal) {
                 if (animal.isBornNewAnimal()) ++countBornAnimals;
 
-                if (animal.getHealthPercent() > 0) ++countLiveAnimals;
-                else ++countDeathAnimal;
+                if (animal.getHealthPercent() > 0) {
+                    ++countLiveAnimals;
+                    if (animal instanceof Predator) ++countLivePredators;
+                    else if (animal instanceof Herbivore) ++countLiveHerbivores;
+                } else ++countDeathAnimal;
             }
         }));
         if (isFirstDay) {
@@ -60,6 +70,7 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
     public void printStatistics() {
         System.out.printf(STATISTIC_OF_DAY, dayNumber);
         System.out.printf(LIVE_ANIMALS, countLiveAnimals);
+        System.out.printf(LIVE_PREDATORS_AND_HERBIVORES, countLivePredators, countLiveHerbivores);
         System.out.printf(BORN_ANIMALS, countBornAnimals);
         System.out.printf(DEATH_ANIMALS, countDeathAnimal);
         System.out.printf(LIVE_PLANTS, countLivePlants);
@@ -84,5 +95,19 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
         countDeathAnimal = 0;
         countEatPlants = 0;
         countBornAnimals = 0;
+        countLivePredators = 0;
+        countLiveHerbivores = 0;
+    }
+
+    private void checkStopGame() {
+        int stopNumber = updateSettingsService.getNumberOfStopCondition();
+        if (stopNumber == 1) {
+            if (countLiveAnimals < 1) System.exit(0);
+        } else if (stopNumber == 2) {
+            if (countLivePredators < 1) System.exit(0);
+        } else if (stopNumber == 3) {
+            if (countLiveHerbivores < 1) System.exit(0);
+        }
+
     }
 }

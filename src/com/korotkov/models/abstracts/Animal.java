@@ -120,7 +120,7 @@ public abstract class Animal extends Entity implements AnimalActions {
                 if (animalToEat != this && animalToEat.getClass() == bestAnimalToEat.getClass() && animalToEat.getHealthPercent() > 0) {
                     this.increaseHealthPercent(animalToEat);
                     animalToEat.setHealthPercent(0);
-                    this.isEatInThisLap = true;
+                    if (!this.isEatInThisLap) this.isEatInThisLap = true;
                     --countOfEatAnimals;
                 }
                 if (countOfEatAnimals < 1) break;
@@ -160,8 +160,13 @@ public abstract class Animal extends Entity implements AnimalActions {
     }
 
     public void increaseHealthPercent(Entity entity) {
+        //System.out.println("Животное " + this + " съело " + entity + " и насытилось на % " + (entity.getWeight() * 100 / this.kgToGetFull));
+        // System.out.println("Было % " + healthPercent);
         this.healthPercent += (entity.getWeight() * 100 / this.kgToGetFull);
-        if (this.healthPercent > 100) this.healthPercent = 100;
+        //System.out.println("Сумма % " + healthPercent);
+
+        if (this.healthPercent > 100.0) this.healthPercent = 100.0;
+        //System.out.println("Стало % " + healthPercent);
     }
 
     @Override
@@ -169,3 +174,5 @@ public abstract class Animal extends Entity implements AnimalActions {
         return this.getClass().getSimpleName() + " id: " + id;
     }
 }
+
+

@@ -44,7 +44,7 @@ public abstract class Entity {
 
 
     public void setWeight(Double weight) {
-        if (weight > 0) this.weight = weight;
+        if (weight > 0.0) this.weight = weight;
     }
 
     public void setMaxCountOnField(Integer maxCountOnField) {
@@ -56,7 +56,7 @@ public abstract class Entity {
     }
 
     public void setKgToGetFull(Double kgToGetFull) {
-        if (kgToGetFull > 0) this.kgToGetFull = kgToGetFull;
+        if (kgToGetFull >= 0.0) this.kgToGetFull = kgToGetFull;
     }
 
    /* @Override

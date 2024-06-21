@@ -84,51 +84,63 @@ public class UpdateSettingsService {
     }
 
     private void changeEntitySettings() {
-        System.out.println(CHOOSE_CURRENT_ENTITY_SETTINGS);
-        intNumber = safeIntegerRead(reader);
-        switch (intNumber) {
-            case 1 -> changePredatorsSettings();
-            case 2 -> changeHerbivoresSettings();
-            case 3 -> changePlantsSettings();
-            case 4 -> {
+        while (true) {
+            System.out.println(CHOOSE_CURRENT_ENTITY_SETTINGS);
+            intNumber = safeIntegerRead(reader);
+            switch (intNumber) {
+                case 1 -> changePredatorsSettings();
+                case 2 -> changeHerbivoresSettings();
+                case 3 -> changePlantsSettings();
+                case 4 -> {
+                    return;
+                }
+                default -> exitGame(reader);
             }
-            default -> exitGame(reader);
         }
     }
 
 
     private void changePredatorsSettings() {
-        System.out.println(CHANGE_PREDATOR_SETTINGS);
-        intNumber = safeIntegerRead(reader);
-        switch (intNumber) {
-            case 1 -> changeAllAnimals(Predator.class);
-            case 2 -> selectAndChangeEntity(Predator.class);
-            case 3 -> {
+        while (true) {
+            System.out.println(CHANGE_PREDATOR_SETTINGS);
+            intNumber = safeIntegerRead(reader);
+            switch (intNumber) {
+                case 1 -> changeAllAnimals(Predator.class);
+                case 2 -> selectAndChangeEntity(Predator.class);
+                case 3 -> {
+                    return;
+                }
+                default -> exitGame(reader);
             }
-            default -> exitGame(reader);
         }
     }
 
     private void changeHerbivoresSettings() {
-        System.out.println(CHANGE_HERBIVORES_SETTINGS);
-        intNumber = safeIntegerRead(reader);
-        switch (intNumber) {
-            case 1 -> changeAllAnimals(Herbivore.class);
-            case 2 -> selectAndChangeEntity(Herbivore.class);
-            case 3 -> {
+        while (true) {
+            System.out.println(CHANGE_HERBIVORES_SETTINGS);
+            intNumber = safeIntegerRead(reader);
+            switch (intNumber) {
+                case 1 -> changeAllAnimals(Herbivore.class);
+                case 2 -> selectAndChangeEntity(Herbivore.class);
+                case 3 -> {
+                    return;
+                }
+                default -> exitGame(reader);
             }
-            default -> exitGame(reader);
         }
     }
 
     private void changePlantsSettings() {
-        System.out.println(CHANGE_PLANTS_SETTINGS);
-        intNumber = safeIntegerRead(reader);
-        switch (intNumber) {
-            case 1 -> selectAndChangeEntity(Plant.class);
-            case 2 -> {
+        while (true) {
+            System.out.println(CHANGE_PLANTS_SETTINGS);
+            intNumber = safeIntegerRead(reader);
+            switch (intNumber) {
+                case 1 -> selectAndChangeEntity(Plant.class);
+                case 2 -> {
+                    return;
+                }
+                default -> exitGame(reader);
             }
-            default -> exitGame(reader);
         }
     }
 
@@ -143,40 +155,42 @@ public class UpdateSettingsService {
         int speed = safeIntegerRead(reader);
         System.out.printf(ALL_ANIMAL_KG_TO_GET_FULL, animal);
         double maxKg = safeDoubleRead(reader);
+        System.out.printf(ALL_ANIMAL_COUNT_BORN_BABY, animal);
+        int maxBornBaby = safeIntegerRead(reader);
 
         if (entityClass == Predator.class) {
             entityCharacteristicConfig.getEntityMapConfig().values().stream()
                     .filter(entity -> entity instanceof Predator)
                     .map(e -> (Animal) e)
-                    .forEach(predator -> changeCurrentAnimal(predator, weight, count, speed, maxKg));
+                    .forEach(predator -> changeCurrentAnimal(predator, weight, count, speed, maxKg, maxBornBaby));
         } else if (entityClass == Herbivore.class) {
             entityCharacteristicConfig.getEntityMapConfig().values().stream()
                     .filter(entity -> entity instanceof Herbivore)
                     .map(e -> (Animal) e)
-                    .forEach(herbivore -> changeCurrentAnimal(herbivore, weight, count, speed, maxKg));
+                    .forEach(herbivore -> changeCurrentAnimal(herbivore, weight, count, speed, maxKg, maxBornBaby));
         }
         System.out.println(SETTINGS_HAVE_BEEN_CHANGED);
     }
 
 
-    private void changeCurrentAnimal(Animal animal, double weight, int count, int speed, double maxKg) {
+    private void changeCurrentAnimal(Animal animal, double weight, int count, int speed, double maxKg, int maxBorn) {
         animal.setWeight(animal.getWeight() + weight);
         animal.setMaxCountOnField(animal.getMaxCountOnField() + count);
         animal.setSpeed(animal.getSpeed() + speed);
         animal.setKgToGetFull(animal.getKgToGetFull() + maxKg);
+        animal.setCountBornBaby(animal.getCountBornBaby() + maxBorn);
     }
 
-    private void setCurrentEntity(Entity entity, double weight, int count, int speed, double maxKg) {
-        if (entity instanceof Animal) {
-            entity.setWeight(weight);
-            entity.setMaxCountOnField(count);
-            entity.setSpeed(speed);
-            entity.setKgToGetFull(maxKg);
-        } else if (entity instanceof Plant) {
-            entity.setWeight(weight);
-            entity.setMaxCountOnField(count);
+    private void setCurrentEntity(Entity entity, double weight, int count, int speed, double maxKg, int maxBorn) {
+        entity.setWeight(weight);
+        entity.setMaxCountOnField(count);
+        if (entity instanceof Animal animal) {
+            animal.setWeight(weight);
+            animal.setMaxCountOnField(count);
+            animal.setSpeed(speed);
+            animal.setKgToGetFull(maxKg);
+            animal.setCountBornBaby(maxBorn);
         }
-
         System.out.println(SETTINGS_HAVE_BEEN_CHANGED);
     }
 
@@ -213,7 +227,7 @@ public class UpdateSettingsService {
         else if (currentEntity instanceof Herbivore) maxCountText = 200;
         else if (currentEntity instanceof Plant) maxCountText = 500;
         double weight, maxKg = 0.0;
-        int count, speed = 0;
+        int count, speed = 0, maxBorn = 0;
         System.out.printf(SET_WEIGHT, currentEntityType.getType());
         weight = safeDoubleRead(reader);
         System.out.printf(SET_COUNT, currentEntityType.getType(), maxCountText);
@@ -224,9 +238,11 @@ public class UpdateSettingsService {
             speed = safeIntegerRead(reader);
             System.out.printf(SET_KG_TO_FULL, currentEntityType.getType());
             maxKg = safeDoubleRead(reader);
+            System.out.printf(SET_COUNT_MAX_BORN_BABY, currentEntityType.getType());
+            maxBorn = safeIntegerRead(reader);
         }
 
-        setCurrentEntity(entityCharacteristicConfig.getEntityMapConfig().get(currentEntityType), weight, count, speed, maxKg);
+        setCurrentEntity(entityCharacteristicConfig.getEntityMapConfig().get(currentEntityType), weight, count, speed, maxKg, maxBorn);
     }
 
     private int safeIntegerRead(BufferedReader reader) {

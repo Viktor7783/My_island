@@ -92,11 +92,11 @@ public class GameOfIsland {
                     }
                 }
             }
-            island.decreaseAnimalsHealthIfNotEat(animalConfig); //уменьшаем здоровье непоевшим в конце кона! через island!
+            island.decreaseAnimalsHealthIfNotEat(animalConfig);
             --daysOfLife; // День прошёл
-            //TODO Вывод статистики в конце каждого кона (Сбор статистики идет для всех животных + трава)
             collectAndDisplayStatisticsService.start();
         }
+        island.getIsland().values().forEach(list -> list.stream().filter(entity -> entity instanceof Animal).map(entity -> (Animal) entity).forEach(animal -> System.out.println(animal.getCountBornBaby())));
     }
 
 
@@ -134,9 +134,9 @@ public class GameOfIsland {
         return entityCharacteristicConfig.getEntityMapConfig().get(entityType).getMaxCountOnField();
     }
 
-    private Integer getSpeed(EntityCharacteristicConfig entityCharacteristicConfig, EntityType entityType) {
+    /*private Integer getSpeed(EntityCharacteristicConfig entityCharacteristicConfig, EntityType entityType) {
         return entityCharacteristicConfig.getEntityMapConfig().get(entityType).getSpeed();
-    }
+    }*/
 
     private Island createIsland(IslandConfig islandConfig) {
         Map<Field, List<Entity>> island = new HashMap<>();

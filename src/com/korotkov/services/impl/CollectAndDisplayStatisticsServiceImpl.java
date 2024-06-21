@@ -11,7 +11,7 @@ import static com.korotkov.config.Constants.*;
 
 public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplayStatisticsService {
     private final Island island;
-    UpdateSettingsService updateSettingsService;
+    private UpdateSettingsService updateSettingsService;
     private int dayNumber;
     private int countLiveAnimals;
     private int firstDayCountLiveAnimals;

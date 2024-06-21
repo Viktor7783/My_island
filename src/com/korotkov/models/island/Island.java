@@ -28,23 +28,22 @@ public class Island implements IslandActions {
 
     @Override
     public void decreaseAnimalsHealthIfNotEat(AnimalConfig animalConfig) {
-        island.values().forEach(list -> list.forEach(entity -> {
-            if (entity instanceof Animal animal) {
-                if (!animal.isEatInThisLap() && animal.getHealthPercent() > 0)
-                    animal.decreaseHealthPercent(animalConfig.getPercentsToRemove());
-            }
-        }));
+        island.values().forEach(list -> list.stream().filter(entity -> entity instanceof Animal)
+                .map(entity -> (Animal) entity)
+                .filter(animal -> animal.getHealthPercent() > 0 && !animal.isEatInThisLap())
+                .forEach(animal -> animal.decreaseHealthPercent(animalConfig.getPercentsToRemove())));
+
     }
 
     @Override
     public void restoreEatMoveBornState() {
-        island.values().forEach(list -> list.forEach(entity -> {
-            if (entity instanceof Animal animal) {
-                if (animal.isBornNewAnimal()) animal.setBornNewAnimal(false);
-                if (animal.isEatInThisLap()) animal.setEatInThisLap(false);
-                if (animal.isMovedInThisLap()) animal.setMovedInThisLap(false);
-            }
-        }));
+        island.values().forEach(list -> list.stream().filter(entity -> entity instanceof Animal)
+                .map(entity -> (Animal) entity)
+                .forEach(animal -> {
+                    if (animal.isBornNewAnimal()) animal.setBornNewAnimal(false);
+                    if (animal.isEatInThisLap()) animal.setEatInThisLap(false);
+                    if (animal.isMovedInThisLap()) animal.setMovedInThisLap(false);
+                }));
     }
 
     @Override

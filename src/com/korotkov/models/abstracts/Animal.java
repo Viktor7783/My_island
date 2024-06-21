@@ -1,12 +1,11 @@
 package com.korotkov.models.abstracts;
 
 import com.korotkov.config.PossibilityOfEatingConfig;
-import com.korotkov.exceptions.NullAnimalException;
-import com.korotkov.exceptions.WrongAnimalClassExceptions;
+
 import com.korotkov.models.enums.DirectionType;
 import com.korotkov.models.herbivores.Herbivore;
 import com.korotkov.models.plants.Plant;
-import com.korotkov.services.impl.ChooseDirectionServiceImpl;
+
 import com.korotkov.services.interfaces.AnimalActions;
 
 import java.lang.reflect.InvocationTargetException;
@@ -20,6 +19,7 @@ public abstract class Animal extends Entity implements AnimalActions {
     private final long id = ++counter;
 
     private double healthPercent;
+    private int countBornBaby;
     private boolean isMovedInThisLap;
     private boolean isBornNewAnimal;
     private boolean isEatInThisLap;
@@ -27,17 +27,32 @@ public abstract class Animal extends Entity implements AnimalActions {
     protected Animal(Double weight, Integer maxCountOnField, Integer speed, Double kgToGetFull) {
         super(weight, maxCountOnField, speed, kgToGetFull);
         healthPercent = 100;
+        countBornBaby = 20;
         isMovedInThisLap = false;
         isBornNewAnimal = false;
         isEatInThisLap = false;
+
     }
 
     protected Animal(Entity entity) {
         super(entity);
         healthPercent = 100;
+        countBornBaby = ((Animal) entity).getCountBornBaby();
         isMovedInThisLap = false;
         isBornNewAnimal = false;
         isEatInThisLap = false;
+    }
+
+    public int getCountBornBaby() {
+        return countBornBaby;
+    }
+
+    public void setCountBornBaby(int countBornBaby) {
+        if (countBornBaby >= 0) this.countBornBaby = countBornBaby;
+    }
+
+    public void decreaseCountBornBaby() {
+        --countBornBaby;
     }
 
     public boolean isEatInThisLap() {
@@ -131,18 +146,22 @@ public abstract class Animal extends Entity implements AnimalActions {
     @Override
     public Animal reproduce(List<Entity> entities) {
         Animal baby = null;
-        List<Animal> currentAnimals = entities.stream().filter(e -> e.getClass() == this.getClass()).map(e -> (Animal) e).filter(a -> a.getHealthPercent() > 0).toList();
-        Optional<Animal> optionalAnimal = (currentAnimals.stream().filter(a -> a != this && !a.isBornNewAnimal()).findFirst());
-        if (optionalAnimal.isPresent() && !this.isBornNewAnimal()) {
-            Animal animalForBorn = optionalAnimal.get();
-            this.setBornNewAnimal(true); //Попытка была
-            animalForBorn.setBornNewAnimal(true);
-            if (currentAnimals.size() < this.getMaxCountOnField()) {
-                try {
-                    baby = this.getClass().getDeclaredConstructor(Entity.class).newInstance(animalForBorn);
-                } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-                         NoSuchMethodException e) {
-                    System.out.printf(REPRODUCE_ERROR, this, animalForBorn);
+        if (this.getCountBornBaby() > 0) {
+            List<Animal> currentAnimals = entities.stream().filter(e -> e.getClass() == this.getClass()).map(e -> (Animal) e).filter(a -> a.getHealthPercent() > 0).toList();
+            Optional<Animal> optionalAnimal = (currentAnimals.stream().filter(a -> a != this && !a.isBornNewAnimal() && a.getCountBornBaby() > 0).findFirst());
+            if (optionalAnimal.isPresent() && !this.isBornNewAnimal()) {
+                Animal animalForBorn = optionalAnimal.get();
+                this.setBornNewAnimal(true); //Попытка была
+                this.decreaseCountBornBaby();
+                animalForBorn.setBornNewAnimal(true);
+                animalForBorn.decreaseCountBornBaby();
+                if (currentAnimals.size() < this.getMaxCountOnField()) {
+                    try {
+                        baby = this.getClass().getDeclaredConstructor(Entity.class).newInstance(animalForBorn);
+                    } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                             NoSuchMethodException e) {
+                        System.out.printf(REPRODUCE_ERROR, this, animalForBorn);
+                    }
                 }
             }
         }

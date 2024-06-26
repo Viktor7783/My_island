@@ -261,19 +261,18 @@ public class Constants {
             ***********************************************************************
              Статистика за прошедший день № %d:
             """;
-    public static final String LIVE_ANIMALS = "На острове живут %d животных\n";
-    public static final String LIVE_PREDATORS_AND_HERBIVORES = "Из них: хищников = %d, травоядных = %d\n";
-    public static final String BORN_ANIMALS = "Родились %d животных\n";
-    public static final String DEATH_ANIMALS = "Умерло %d животных\n";
-    public static final String LIVE_PLANTS = "Растут %d растений\n";
-    public static final String EAT_PLANTS = "Съедено %d растений\n";
-    public static final String DIFFERENCE = "Разница между первым и текущим днём:";
-    public static final String MORE_ANIMALS = "Животных стало больше на %d особей\n";
-    public static final String LESS_ANIMALS = "Животных стало меньше на %d особей\n";
-    public static final String NO_CHANGES_ANIMALS = "Количество животных не изменилось";
-    public static final String MORE_PLANTS = "Растений стало больше на %d штук\n";
-    public static final String LESS_PLANTS = "Растений стало меньше на %d штук\n";
-    public static final String NO_CHANGES_PLANTS = "Количество растений не изменилось";
+    public static final String LIVE_ANIMALS = "На острове живут %d животных:\n";
+    public static final String BORN_ANIMALS = "\nРодились %d животных:\n";
+    public static final String DEAD_ANIMALS = "\nУмерло %d животных:\n";
+    public static final String LIVE_PLANTS = "\nРастут %d растений:\n";
+    public static final String EAT_PLANTS = "\nСъедено %d растений:\n";
+    public static final String DIFFERENCE = "\nРазница между первым и текущим днём:";
+    public static final String MORE_ANIMALS = "Общее количество животных стало больше на %d особей:\n";
+    public static final String LESS_ANIMALS = "Общее количество животных стало меньше на %d особей:\n";
+    public static final String NO_CHANGES_ANIMALS = "Общее количество животных не изменилось:";
+    public static final String MORE_PLANTS = "Общее количество растений стало больше на %d штук:\n";
+    public static final String LESS_PLANTS = "Общее количество растений стало меньше на %d штук:\n";
+    public static final String NO_CHANGES_PLANTS = "Общее количество растений не изменилось:\n";
     public static final String END = "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&";
 
     public static final String GAME_OVER = """

@@ -94,14 +94,14 @@ public abstract class Animal extends Entity implements AnimalActions {
     }
 
     private void eatPlant(List<Entity> entities, Random random) {
-        if (this instanceof Herbivore) {
+        if (this instanceof Herbivore && !this.isEatInThisLap) {
             int countOfEatPlants = random.nextInt(1, 4);
             if (this instanceof Rodent || this instanceof Insect) countOfEatPlants = 1;
             List<Plant> plants = entities.stream().filter(e -> e instanceof Plant).map(e -> (Plant) e).filter(p -> !p.isEaten()).toList();
             for (Plant plantToEat : plants) {
                 this.increaseHealthPercent(plantToEat);
                 plantToEat.setEaten(true);
-                if (!this.isEatInThisLap) this.isEatInThisLap = true;
+                this.isEatInThisLap = true;
                 --countOfEatPlants;
                 if (countOfEatPlants < 1) break;
             }
@@ -124,11 +124,11 @@ public abstract class Animal extends Entity implements AnimalActions {
                     .get().getKey().entrySet().iterator().next().getValue());
             int from = 1, to = 2;
             if (bestAnimalToEat instanceof Insect) {
-                from = 50;
-                to = 101;
+                from = 2;
+                to = 5;
             } else if (bestAnimalToEat instanceof Rodent) {
-                from = 20;
-                to = 51;
+                from = 10;
+                to = 20;
             }
             int countOfEatAnimals = random.nextInt(from, to);
             for (Animal animalToEat : animals) {

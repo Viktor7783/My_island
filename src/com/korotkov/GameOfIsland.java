@@ -96,7 +96,6 @@ public class GameOfIsland {
             --daysOfLife; // День прошёл
             collectAndDisplayStatisticsService.start();
         }
-        island.getIsland().values().forEach(list -> list.stream().filter(entity -> entity instanceof Animal).map(entity -> (Animal) entity).forEach(animal -> System.out.println(animal.getCountBornBaby())));
     }
 
 
@@ -161,9 +160,13 @@ class MyTestClass { //TODO: Удалить перед pullRequest!!!
         if (fin > 100.0) fin = 100.0;
         System.out.println(fin);
 
-        double finMouse = 33.1;
+        double zzz = 1.0 * 100 / 0.0 + 100;
+        System.out.println(zzz);
+        System.out.println(1.0 * 100 / 0.0 > 100.0);
+        /*double finMouse = 33.1;
         finMouse += (0.01 * 100 / 0.01);
-        System.out.println(finMouse);
+        System.out.println(finMouse);*/
+
 
     }
 }

@@ -3,7 +3,7 @@ package com.korotkov.models.abstracts;
 
 import java.util.Objects;
 
-public abstract class Entity {
+public abstract class Entity implements Comparable<Entity> {
     protected Double weight;
     protected Integer maxCountOnField;
     protected Integer speed;
@@ -59,7 +59,13 @@ public abstract class Entity {
         if (kgToGetFull >= 0.0) this.kgToGetFull = kgToGetFull;
     }
 
-   /* @Override
+    @Override
+    public int compareTo(Entity o) {
+        if (o == null) return -1;
+        return this.getClass().getSimpleName().compareTo(o.getClass().getSimpleName());
+    }
+
+    /* @Override
     public boolean equals(Object obj) {
         if (obj == null) return false;
         if (this == obj) return true;

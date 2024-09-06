@@ -10,6 +10,10 @@ public class DailyActivities {
         return isGrassPlanted && isRemoveAndRestoreAnimals && isAnimalActionsCompleted;
     }
 
+    public boolean isTimeToAnimalActions() {
+        return isGrassPlanted && isRemoveAndRestoreAnimals && !isAnimalActionsCompleted;
+    }
+
     public boolean isGrassPlanted() {
         return isGrassPlanted;
     }

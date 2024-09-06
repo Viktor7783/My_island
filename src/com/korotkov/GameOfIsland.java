@@ -125,34 +125,49 @@ public class GameOfIsland {
                     }
             );
 
-
-            //todo: Здесь будет поток AnimalActions - после grassPlanted и animalsRemoveAndRestore и еще что то чтобы не делал цикл постоянно!
-            for (Map.Entry<Field, List<Entity>> fieldListEntry : island.getIsland().entrySet()) {
-                Field field = fieldListEntry.getKey();
-                List<Entity> entities = fieldListEntry.getValue();
-                ListIterator<Entity> entityListIterator = entities.listIterator();
-                while (entityListIterator.hasNext()) {
-                    Entity entity = entityListIterator.next();
-                    if (entity instanceof Animal animal) {
-                        if (!animal.isBornNewAnimal() && !animal.isMovedInThisLap() && animal.getHealthPercent() > 0) {//Если животное двигалось или уже рожало совместно с другим животным - пропускаем ход - он уже сделан
-                            Action action = Action.values()[random.nextInt(Action.values().length)];
-                            switch (action) {
-                                case MOVE -> {
-                                    if (animal.getSpeed() > 0)
-                                        moveService.move(animal, random.nextInt(1, animal.getSpeed() + 1), field, animal.chooseDirection(random), entityListIterator);
-                                }
-                                case EAT -> animal.eat(entities, possibilityOfEatingConfig, random);
-                                case REPRODUCE -> {
-                                    Animal baby = animal.reproduce(entities); // Мы можем только рожать, не можем добавлять на остров
-                                    if (baby != null) entityListIterator.add(baby);
+            executors.execute(() -> { // поток AnimalActions - после grassPlanted и animalsRemoveAndRestore
+                try {
+                    while (!Thread.interrupted()) {
+                        synchronized (dailyActivities) {
+                            while (!dailyActivities.isTimeToAnimalActions()) {
+                                dailyActivities.wait();
+                            }
+                        }
+                        //настало время активных животных todo: подумать о синхронизации между животными
+                        for (Map.Entry<Field, List<Entity>> fieldListEntry : island.getIsland().entrySet()) {
+                            Field field = fieldListEntry.getKey();
+                            List<Entity> entities = fieldListEntry.getValue();
+                            ListIterator<Entity> entityListIterator = entities.listIterator();
+                            while (entityListIterator.hasNext()) {
+                                Entity entity = entityListIterator.next();
+                                if (entity instanceof Animal animal) {
+                                    if (!animal.isBornNewAnimal() && !animal.isMovedInThisLap() && animal.getHealthPercent() > 0) {//Если животное двигалось или уже рожало совместно с другим животным - пропускаем ход - он уже сделан
+                                        Action action = Action.values()[random.nextInt(Action.values().length)];
+                                        switch (action) {
+                                            case MOVE -> {
+                                                if (animal.getSpeed() > 0)
+                                                    moveService.move(animal, random.nextInt(1, animal.getSpeed() + 1), field, animal.chooseDirection(random), entityListIterator);
+                                            }
+                                            case EAT -> animal.eat(entities, possibilityOfEatingConfig, random);
+                                            case REPRODUCE -> {
+                                                Animal baby = animal.reproduce(entities); // Мы можем только рожать, не можем добавлять на остров
+                                                if (baby != null) entityListIterator.add(baby);
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
+                        island.decreaseAnimalsHealthIfNotEat(animalConfig);
+                        synchronized (dailyActivities) {
+                            dailyActivities.setAnimalActionsCompleted(true);
+                            dailyActivities.notifyAll();
+                        }
                     }
-                }
-            }
-            island.decreaseAnimalsHealthIfNotEat(animalConfig); //todo: добавляем в поток Animal Actions
+                } catch (InterruptedException _) {
 
+                }
+            });
 
             executors.execute(() -> { // Поток со статистикой
                 try {

@@ -42,25 +42,12 @@ public class Island implements IslandActions {
     }
 
     @Override
-    public void decreaseAnimalsHealthIfNotEat(AnimalConfig animalConfig) { //todo: synchronized
+    public void decreaseAnimalsHealthIfNotEat(AnimalConfig animalConfig) { //todo: synchronized???
         island.values().forEach(list -> list.stream().filter(entity -> entity instanceof Animal)
                 .map(entity -> (Animal) entity)
                 .filter(animal -> animal.getHealthPercent() > 0 && !animal.isEatInThisLap())
                 .forEach(animal -> animal.decreaseHealthPercent(animalConfig.getPercentsToRemove())));
-
     }
-
-    /*@Override
-    public void restoreEatMoveBornState() {
-        island.values().forEach(list -> list.stream().filter(entity -> entity instanceof Animal)
-                .map(entity -> (Animal) entity)
-                .forEach(animal -> {
-                    if (animal.isBornNewAnimal()) animal.setBornNewAnimal(false);
-                    if (animal.isEatInThisLap()) animal.setEatInThisLap(false);
-                    if (animal.isMovedInThisLap()) animal.setMovedInThisLap(false);
-                }));
-    }*/
-
 
     @Override
     public void removeEatenPlants() {

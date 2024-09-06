@@ -1,0 +1,45 @@
+package com.korotkov.multithreading;
+
+public class DailyActivities {
+    private boolean isGrassPlanted;
+    private boolean isAnimalActionsCompleted;
+    private boolean isRemoveAndRestoreAnimals;
+    private boolean isShownDailyStatistics = true;
+
+    public boolean isTimeToShowStatistics() {
+        return isGrassPlanted && isRemoveAndRestoreAnimals && isAnimalActionsCompleted;
+    }
+
+    public boolean isGrassPlanted() {
+        return isGrassPlanted;
+    }
+
+    public boolean isAnimalActionsCompleted() {
+        return isAnimalActionsCompleted;
+    }
+
+    public boolean isRemoveAndRestoreAnimals() {
+        return isRemoveAndRestoreAnimals;
+    }
+
+    public boolean isShownDailyStatistics() {
+        return isShownDailyStatistics;
+    }
+
+    public void setGrassPlanted(boolean grassPlanted) {
+        isGrassPlanted = grassPlanted;
+    }
+
+    public void setAnimalActionsCompleted(boolean animalActionsCompleted) {
+        isAnimalActionsCompleted = animalActionsCompleted;
+    }
+
+    public void setRemoveAndRestoreAnimals(boolean removeAndRestoreAnimals) {
+        isRemoveAndRestoreAnimals = removeAndRestoreAnimals;
+    }
+
+    public void setShownDailyStatistics(boolean shownDailyStatistics) {
+        isShownDailyStatistics = shownDailyStatistics;
+    }
+}
+

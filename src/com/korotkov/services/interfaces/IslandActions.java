@@ -6,13 +6,12 @@ import com.korotkov.config.EntityCharacteristicConfig;
 import java.util.Random;
 
 public interface IslandActions {
-    void removeDeathAnimal();
+
+    void removeAndRestoreAnimals();
 
     void removeEatenPlants();
 
     void refillPlants(EntityCharacteristicConfig entityCharacteristicConfig, Random random);
-
-    void restoreEatMoveBornState();
 
     void decreaseAnimalsHealthIfNotEat(AnimalConfig animalConfig);
 

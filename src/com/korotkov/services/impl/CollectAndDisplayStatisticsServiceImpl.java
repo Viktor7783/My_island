@@ -1,5 +1,6 @@
 package com.korotkov.services.impl;
 
+import com.korotkov.config.ImagesOfEntitiesConfig;
 import com.korotkov.models.abstracts.Animal;
 import com.korotkov.models.abstracts.Entity;
 import com.korotkov.models.herbivores.Herbivore;
@@ -17,6 +18,7 @@ import static com.korotkov.config.Constants.*;
 
 public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplayStatisticsService {
     private final Island island;
+    private final ImagesOfEntitiesConfig imagesOfEntitiesConfig;
     private final UpdateSettingsService updateSettingsService;
     private int dayNumber;
     private boolean isFirstDay;
@@ -36,8 +38,9 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
     private Map<Class<? extends Entity>, Integer> firstDayLiveAnimals;
     private Map<Class<? extends Entity>, Integer> firstDayLivePlants;
 
-    public CollectAndDisplayStatisticsServiceImpl(Island island, UpdateSettingsService updateSettingsService) {
+    public CollectAndDisplayStatisticsServiceImpl(Island island, UpdateSettingsService updateSettingsService, ImagesOfEntitiesConfig iConfig) {
         this.island = island;
+        imagesOfEntitiesConfig = iConfig;
         this.updateSettingsService = updateSettingsService;
         this.isFirstDay = true;
         liveAnimals = new TreeMap<>(classComparator);
@@ -47,11 +50,11 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
         bornAnimals = new TreeMap<>(classComparator);
     }
 
-    public void start() {
+    public void start() {// todo: разбросать по потокам этот метод
         collectStatistics();
-        printStatistics();
-        checkStopGame();
-        resetLapValues();
+        printStatistics(); // поток на вывод изображения
+        checkStopGame(); // поток на сбор статистики после потока вывода изображения
+        resetLapValues(); // поток на сбор статистики после потока вывода изображения
     }
 
     @Override
@@ -97,19 +100,19 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
         System.out.printf(STATISTIC_OF_DAY, dayNumber);
         System.out.printf(LIVE_ANIMALS, countLiveAnimals);
         if (countLiveAnimals != 0)
-            liveAnimals.forEach((key, value) -> System.out.print("[" + key.getSimpleName() + " = " + value + "] "));
+            liveAnimals.forEach((key, value) -> System.out.print("[" + imagesOfEntitiesConfig.getImagesMapConfig().get(key.getSimpleName().toLowerCase()) + " = " + value + "] "));
         System.out.printf(BORN_ANIMALS, countBornAnimals / 2);
         if (countBornAnimals != 0)
-            bornAnimals.forEach((key, value) -> System.out.print("[" + key.getSimpleName() + " = " + value / 2 + "] "));
+            bornAnimals.forEach((key, value) -> System.out.print("[" + imagesOfEntitiesConfig.getImagesMapConfig().get(key.getSimpleName().toLowerCase()) + " = " + value / 2 + "] "));
         System.out.printf(DEAD_ANIMALS, countDeadAnimals);
         if (countDeadAnimals != 0)
-            deadAnimals.forEach((key, value) -> System.out.print("[" + key.getSimpleName() + " = " + value + "] "));
+            deadAnimals.forEach((key, value) -> System.out.print("[" + imagesOfEntitiesConfig.getImagesMapConfig().get(key.getSimpleName().toLowerCase()) + " = " + value + "] "));
         System.out.printf(LIVE_PLANTS, countLivePlants);
         if (countLivePlants != 0)
-            livePlants.forEach((key, value) -> System.out.print("[" + key.getSimpleName() + " = " + value + "] "));
+            livePlants.forEach((key, value) -> System.out.print("[" + imagesOfEntitiesConfig.getImagesMapConfig().get(key.getSimpleName().toLowerCase()) + " = " + value + "] "));
         System.out.printf(EAT_PLANTS, countEatenPlants);
         if (countEatenPlants != 0)
-            eatenPlants.forEach((key, value) -> System.out.print("[" + key.getSimpleName() + " = " + value + "] "));
+            eatenPlants.forEach((key, value) -> System.out.print("[" + imagesOfEntitiesConfig.getImagesMapConfig().get(key.getSimpleName().toLowerCase()) + " = " + value + "] "));
         System.out.println(DIFFERENCE);
         int totalDifferenceLiveAnimals = countLiveAnimals - firstDayCountLiveAnimals;
         int totalDifferenceLivePlants = countLivePlants - firstDayCountLivePlants;
@@ -135,8 +138,9 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
             difference = (liveAnimals.get(pair.getKey()) == null ? 0 : liveAnimals.get(pair.getKey())) - pair.getValue();
             condition = difference > 0 ? " стало больше на " : (difference < 0 ? " стало меньше на " : " количество не изменилось ");
             if (difference != 0)
-                System.out.print("[" + pair.getKey().getSimpleName() + condition + Math.abs(difference) + "] ");
-            else System.out.print("[" + pair.getKey().getSimpleName() + condition + "] ");
+                System.out.print("[" + imagesOfEntitiesConfig.getImagesMapConfig().get(pair.getKey().getSimpleName().toLowerCase()) + condition + Math.abs(difference) + "] ");
+            else
+                System.out.print("[" + imagesOfEntitiesConfig.getImagesMapConfig().get(pair.getKey().getSimpleName().toLowerCase()) + condition + "] ");
         }
         System.out.println();
     }
@@ -148,8 +152,9 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
             difference = (livePlants.get(pair.getKey()) == null ? 0 : livePlants.get(pair.getKey())) - pair.getValue();
             condition = difference > 0 ? " стало больше на " : (difference < 0 ? " стало меньше на " : " количество не изменилось ");
             if (difference != 0)
-                System.out.print("[" + pair.getKey().getSimpleName() + condition + Math.abs(difference) + "] ");
-            else System.out.print("[" + pair.getKey().getSimpleName() + condition + "] ");
+                System.out.print("[" + imagesOfEntitiesConfig.getImagesMapConfig().get(pair.getKey().getSimpleName().toLowerCase()) + condition + Math.abs(difference) + "] ");
+            else
+                System.out.print("[" + imagesOfEntitiesConfig.getImagesMapConfig().get(pair.getKey().getSimpleName().toLowerCase()) + condition + "] ");
         }
         System.out.println();
     }

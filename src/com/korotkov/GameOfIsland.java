@@ -13,6 +13,7 @@ import com.korotkov.models.island.Field;
 import com.korotkov.models.island.Island;
 import com.korotkov.multithreading.DailyActivities;
 import com.korotkov.services.impl.CollectAndDisplayStatisticsServiceImpl;
+import com.korotkov.config.ImagesOfEntitiesConfig;
 import com.korotkov.services.interfaces.MoveService;
 import com.korotkov.services.impl.MoveServiceImpl;
 import com.korotkov.services.impl.UpdateSettingsService;
@@ -22,7 +23,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import static com.korotkov.config.Constants.*;
@@ -30,6 +30,7 @@ import static com.korotkov.config.Constants.*;
 public class GameOfIsland {
     private final Random random;
     private final EntityCharacteristicConfig entityCharacteristicConfig;
+    private final ImagesOfEntitiesConfig imagesOfEntitiesConfig;
     private final PossibilityOfEatingConfig possibilityOfEatingConfig;
     private final IslandConfig islandConfig;
     private final AnimalConfig animalConfig;
@@ -45,6 +46,7 @@ public class GameOfIsland {
         ObjectMapper objectMapper = new ObjectMapper();
         random = new Random();
         entityCharacteristicConfig = new EntityCharacteristicConfig(objectMapper, PATH_TO_ENTITY_CHARACTERISTIC);
+        imagesOfEntitiesConfig = new ImagesOfEntitiesConfig(objectMapper, PATH_TO_IMAGES_OF_ENTITIES);
         possibilityOfEatingConfig = new PossibilityOfEatingConfig(objectMapper, PATH_TO_POSSIBILITY_OF_EATING, entityCharacteristicConfig.getEntityMapConfig());
         islandConfig = new IslandConfig(PATH_TO_ISLAND_SETTINGS);
         animalConfig = new AnimalConfig(PATH_TO_ISLAND_SETTINGS);
@@ -64,7 +66,7 @@ public class GameOfIsland {
         island = createIsland(islandConfig);
         fillIslandAnimalsAndPlants(island, random, entityCharacteristicConfig);
         moveService = new MoveServiceImpl(island, islandConfig);
-        collectAndDisplayStatisticsService = new CollectAndDisplayStatisticsServiceImpl(island, updateSettingsService);
+        collectAndDisplayStatisticsService = new CollectAndDisplayStatisticsServiceImpl(island, updateSettingsService, imagesOfEntitiesConfig);
         daysOfLife = islandConfig.getDaysOfLife();
 
 
@@ -133,7 +135,7 @@ public class GameOfIsland {
                                 dailyActivities.wait();
                             }
                         }
-                        //настало время активных животных todo: подумать о синхронизации между животными
+                        //настало время активных животных todo: подумать о синхронизации между животными при поедании друг друга
                         for (Map.Entry<Field, List<Entity>> fieldListEntry : island.getIsland().entrySet()) {
                             Field field = fieldListEntry.getKey();
                             List<Entity> entities = fieldListEntry.getValue();
@@ -141,7 +143,7 @@ public class GameOfIsland {
                             while (entityListIterator.hasNext()) {
                                 Entity entity = entityListIterator.next();
                                 if (entity instanceof Animal animal) {
-                                    if (!animal.isBornNewAnimal() && !animal.isMovedInThisLap() && animal.getHealthPercent() > 0) {//Если животное двигалось или уже рожало совместно с другим животным - пропускаем ход - он уже сделан
+                                    if (!animal.isBornNewAnimal() && !animal.isMovedInThisLap() && animal.getHealthPercent() > 0) {
                                         Action action = Action.values()[random.nextInt(Action.values().length)];
                                         switch (action) {
                                             case MOVE -> {
@@ -247,61 +249,8 @@ public class GameOfIsland {
 
 class MyTestClass { //TODO: Удалить перед pullRequest!!!
     public static void main(String[] args) {
-       /* List<List<Integer>> set = new ArrayList<>();
-        IntStream.range(0, 5).forEach(_ -> {
-            List<Integer> list = new ArrayList<>();
-            IntStream.range(0, 100000).forEach(list::add);
-            set.add(list);
-        });
-
-        ExecutorService executors = Executors.newCachedThreadPool();
-        executors.execute(() -> {
-            set.forEach(list -> {
-                synchronized (list) {
-                    System.out.println("Удаляем четные числа");
-                    list.removeIf(number -> number % 2 == 0);
-                    System.out.println("Кончили удалять чётные");
-                }
-            });
-
-        });
-        executors.execute(() -> {
-            set.forEach(list -> {
-                synchronized (list) {
-                    System.out.println("Удаляем Нечетные числа");
-                    list.removeIf(number -> number % 2 != 0);
-                    System.out.println("Кончили с нечетными");
-                }
-            });
-
-        });
-        executors.shutdown();
-        try {
-            TimeUnit.MILLISECONDS.sleep(900);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        synchronized (set) {
-            set.forEach(list -> System.out.println(list.size()));
-        }
-        Set<List<Integer>> set1 = new HashSet<>();
-        set1.add(List.of(1, 2, 3, 4, 5));
-        set1.add(List.of(1, 2, 3, 4, 5));
-        set1.add(List.of(1, 2, 3, 4, 5));
-        set1.add(List.of(1, 2, 3, 4, 5));
-        System.out.println("Size of set1 = " + set1.size());
-
-        List<Integer> myList = new ArrayList<>();
-        IntStream.range(0, 100000).forEach(myList::add);
-        new Thread(() -> myList.forEach(System.out::println)).start();
-        new Thread(() -> myList.forEach(System.out::println)).start();
-        new Thread(() -> myList.forEach(System.out::println)).start();
-        new Thread(() -> myList.forEach(System.out::println)).start();
-        new Thread(() -> myList.forEach(System.out::println)).start();*/
-
-        IntStream.range(0, 10).forEach(System.out::println);
-        IntStream.range(0, 10).mapToObj(e -> "a").forEach(System.out::println);
-
+        String s = "\uD83D\uDC01";
+        System.out.println(s);
     }
 }
 

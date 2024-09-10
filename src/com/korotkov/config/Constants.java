@@ -2,6 +2,7 @@ package com.korotkov.config;
 
 public class Constants {
     public static final String PATH_TO_ENTITY_CHARACTERISTIC = "resources/entity_characteristic.json";
+    public static final String PATH_TO_IMAGES_OF_ENTITIES = "resources/images_of_entities.json";
     public static final String PATH_TO_POSSIBILITY_OF_EATING = "resources/possibility_of_eating.json";
     public static final String PATH_TO_ISLAND_SETTINGS = "resources/settings.properties";
 

@@ -1,6 +1,7 @@
 package com.korotkov.services.impl;
 
 import com.korotkov.config.ImagesOfEntitiesConfig;
+import com.korotkov.config.IslandConfig;
 import com.korotkov.models.abstracts.Animal;
 import com.korotkov.models.abstracts.Entity;
 import com.korotkov.models.herbivores.Herbivore;
@@ -18,6 +19,7 @@ import static com.korotkov.config.Constants.*;
 
 public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplayStatisticsService {
     private final Island island;
+    private final IslandConfig islandConfig;
     private final ImagesOfEntitiesConfig imagesOfEntitiesConfig;
     private final UpdateSettingsService updateSettingsService;
     private int dayNumber;
@@ -38,8 +40,9 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
     private Map<Class<? extends Entity>, Integer> firstDayLiveAnimals;
     private Map<Class<? extends Entity>, Integer> firstDayLivePlants;
 
-    public CollectAndDisplayStatisticsServiceImpl(Island island, UpdateSettingsService updateSettingsService, ImagesOfEntitiesConfig iConfig) {
+    public CollectAndDisplayStatisticsServiceImpl(Island island, UpdateSettingsService updateSettingsService, ImagesOfEntitiesConfig iConfig, IslandConfig islandConfig) {
         this.island = island;
+        this.islandConfig = islandConfig;
         imagesOfEntitiesConfig = iConfig;
         this.updateSettingsService = updateSettingsService;
         this.isFirstDay = true;
@@ -159,7 +162,7 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
         System.out.println();
     }
 
-    private void resetLapValues() {
+    public void resetLapValues() {
         liveAnimals.clear();
         livePlants.clear();
         deadAnimals.clear();
@@ -172,7 +175,8 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
         countEatenPlants = 0;
     }
 
-    private void checkStopGame() {
+    public void checkStopGame() {
+        if (dayNumber > islandConfig.getDaysOfLife()) System.exit(0);
         int stopNumber = updateSettingsService.getNumberOfStopCondition();
         if (stopNumber == 1) {
             if (liveAnimals.isEmpty()) System.exit(0);

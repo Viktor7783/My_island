@@ -38,9 +38,8 @@ public class GameOfIsland {
     private Island island;
     private MoveService moveService;
     private CollectAndDisplayStatisticsServiceImpl collectAndDisplayStatisticsService;
-    private int daysOfLife;
-    private DailyActivities dailyActivities;
-    private ExecutorService executors;
+    private final DailyActivities dailyActivities;
+    private final ExecutorService executors;
 
     public GameOfIsland() {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -66,134 +65,150 @@ public class GameOfIsland {
         island = createIsland(islandConfig);
         fillIslandAnimalsAndPlants(island, random, entityCharacteristicConfig);
         moveService = new MoveServiceImpl(island, islandConfig);
-        collectAndDisplayStatisticsService = new CollectAndDisplayStatisticsServiceImpl(island, updateSettingsService, imagesOfEntitiesConfig);
-        daysOfLife = islandConfig.getDaysOfLife();
+        collectAndDisplayStatisticsService = new CollectAndDisplayStatisticsServiceImpl(island, updateSettingsService, imagesOfEntitiesConfig, islandConfig);
 
-
-        //Цикл начинается здесь!!! (несколько конов)
-        while (daysOfLife > 0) { //TODO: Вынести в один метод (жизнь животных и растений)
-            executors.execute(() -> {//Поток на удаление дохлятины и восстановление показателей животных  todo: вынести из цикла daysOfLife
-                        try {
-                            while (!Thread.interrupted()) {
-                                synchronized (dailyActivities) {
-                                    while (!dailyActivities.isShownDailyStatistics()) {
-                                        dailyActivities.wait();
-                                    }
-                                }
-                                island.removeAndRestoreAnimals();
-                                synchronized (dailyActivities) {
-                                    dailyActivities.setRemoveAndRestoreAnimals(true);
-                                    dailyActivities.notifyAll();
-                                    while (!dailyActivities.isGrassPlanted()) {
-                                        dailyActivities.wait();
-                                    }
-                                    if (dailyActivities.isShownDailyStatistics()) {
-                                        dailyActivities.setShownDailyStatistics(false);
-                                        dailyActivities.notifyAll();
-                                    }
+        executors.execute(() -> {//Поток на удаление дохлятины и восстановление показателей животных
+                    try {
+                        while (!Thread.interrupted()) {
+                            synchronized (dailyActivities) {
+                                while (!dailyActivities.isShownDailyStatistics()) {
+                                    dailyActivities.wait();
                                 }
                             }
-                        } catch (InterruptedException _) {
+                            island.removeAndRestoreAnimals();
+                            synchronized (dailyActivities) {
+                                dailyActivities.setRemoveAndRestoreAnimals(true);
+                                dailyActivities.notifyAll();
+                                while (!dailyActivities.isGrassPlanted()) {
+                                    dailyActivities.wait();
+                                }
+                                if (dailyActivities.isShownDailyStatistics()) {
+                                    dailyActivities.setShownDailyStatistics(false);
+                                    dailyActivities.notifyAll();
+                                }
+                            }
+                        }
+                    } catch (InterruptedException _) {
 
+                    }
+                }
+        );
+
+        executors.execute(() -> {//Поток на удаление съеденных и посадку новых растений работает параллельно с дохлятиной
+                    try {
+                        while (!Thread.interrupted()) {
+                            synchronized (dailyActivities) {
+                                while (!dailyActivities.isShownDailyStatistics()) {
+                                    dailyActivities.wait();
+                                }
+                            }
+                            island.removeEatenPlants();
+                            island.refillPlants(entityCharacteristicConfig, random);
+                            synchronized (dailyActivities) {
+                                dailyActivities.setGrassPlanted(true);
+                                dailyActivities.notifyAll();
+                                while (!dailyActivities.isRemoveAndRestoreAnimals()) {
+                                    dailyActivities.wait();
+                                }
+                                if (dailyActivities.isShownDailyStatistics()) {
+                                    dailyActivities.setShownDailyStatistics(false);
+                                    dailyActivities.notifyAll();
+                                }
+                            }
+                        }
+                    } catch (InterruptedException _) {
+
+                    }
+                }
+        );
+
+        executors.execute(() -> { // поток AnimalActions - после grassPlanted и animalsRemoveAndRestore
+            try {
+                while (!Thread.interrupted()) {
+                    synchronized (dailyActivities) {
+                        while (!dailyActivities.isTimeToAnimalActions()) {
+                            dailyActivities.wait();
                         }
                     }
-            );
-
-            executors.execute(() -> {//Поток на удаление съеденных и посадку новых растений работает параллельно с дохлятиной todo: вынести из цикла daysOfLife
-                        try {
-                            while (!Thread.interrupted()) {
-                                synchronized (dailyActivities) {
-                                    while (!dailyActivities.isShownDailyStatistics()) {
-                                        dailyActivities.wait();
-                                    }
-                                }
-                                island.removeEatenPlants();
-                                island.refillPlants(entityCharacteristicConfig, random);
-                                synchronized (dailyActivities) {
-                                    dailyActivities.setGrassPlanted(true);
-                                    dailyActivities.notifyAll();
-                                    while (!dailyActivities.isRemoveAndRestoreAnimals()) {
-                                        dailyActivities.wait();
-                                    }
-                                    if (dailyActivities.isShownDailyStatistics()) {
-                                        dailyActivities.setShownDailyStatistics(false);
-                                        dailyActivities.notifyAll();
-                                    }
-                                }
-                            }
-                        } catch (InterruptedException _) {
-
-                        }
-                    }
-            );
-
-            executors.execute(() -> { // поток AnimalActions - после grassPlanted и animalsRemoveAndRestore
-                try {
-                    while (!Thread.interrupted()) {
-                        synchronized (dailyActivities) {
-                            while (!dailyActivities.isTimeToAnimalActions()) {
-                                dailyActivities.wait();
-                            }
-                        }
-                        //настало время активных животных todo: подумать о синхронизации между животными при поедании друг друга
-                        for (Map.Entry<Field, List<Entity>> fieldListEntry : island.getIsland().entrySet()) {
-                            Field field = fieldListEntry.getKey();
-                            List<Entity> entities = fieldListEntry.getValue();
-                            ListIterator<Entity> entityListIterator = entities.listIterator();
-                            while (entityListIterator.hasNext()) {
-                                Entity entity = entityListIterator.next();
-                                if (entity instanceof Animal animal) {
-                                    if (!animal.isBornNewAnimal() && !animal.isMovedInThisLap() && animal.getHealthPercent() > 0) {
-                                        Action action = Action.values()[random.nextInt(Action.values().length)];
-                                        switch (action) {
-                                            case MOVE -> {
-                                                if (animal.getSpeed() > 0)
-                                                    moveService.move(animal, random.nextInt(1, animal.getSpeed() + 1), field, animal.chooseDirection(random), entityListIterator);
-                                            }
-                                            case EAT -> animal.eat(entities, possibilityOfEatingConfig, random);
-                                            case REPRODUCE -> {
-                                                Animal baby = animal.reproduce(entities); // Мы можем только рожать, не можем добавлять на остров
-                                                if (baby != null) entityListIterator.add(baby);
-                                            }
+                    //настало время активных животных todo: подумать о синхронизации между животными при поедании друг друга
+                    for (Map.Entry<Field, List<Entity>> fieldListEntry : island.getIsland().entrySet()) {
+                        Field field = fieldListEntry.getKey();
+                        List<Entity> entities = fieldListEntry.getValue();
+                        ListIterator<Entity> entityListIterator = entities.listIterator();
+                        while (entityListIterator.hasNext()) {
+                            Entity entity = entityListIterator.next();
+                            if (entity instanceof Animal animal) {
+                                if (!animal.isBornNewAnimal() && !animal.isMovedInThisLap() && animal.getHealthPercent() > 0) {
+                                    Action action = Action.values()[random.nextInt(Action.values().length)];
+                                    switch (action) {
+                                        case MOVE -> {
+                                            if (animal.getSpeed() > 0)
+                                                moveService.move(animal, random.nextInt(1, animal.getSpeed() + 1), field, animal.chooseDirection(random), entityListIterator);
+                                        }
+                                        case EAT -> animal.eat(entities, possibilityOfEatingConfig, random);
+                                        case REPRODUCE -> {
+                                            Animal baby = animal.reproduce(entities); // Мы можем только рожать, не можем добавлять на остров
+                                            if (baby != null) entityListIterator.add(baby);
                                         }
                                     }
                                 }
                             }
                         }
-                        island.decreaseAnimalsHealthIfNotEat(animalConfig);
-                        synchronized (dailyActivities) {
-                            dailyActivities.setAnimalActionsCompleted(true);
-                            dailyActivities.notifyAll();
+                    }
+                    island.decreaseAnimalsHealthIfNotEat(animalConfig);
+                    synchronized (dailyActivities) {
+                        dailyActivities.setAnimalActionsCompleted(true);
+                        dailyActivities.notifyAll();
+                    }
+                }
+            } catch (InterruptedException _) {
+
+            }
+        });
+
+        executors.execute(() -> { //Поток на сбор статистики
+            try {
+                while (!Thread.interrupted()) {
+                    synchronized (dailyActivities) {
+                        while (!dailyActivities.isTimeToCollectStatistics()) {
+                            dailyActivities.wait();
                         }
                     }
-                } catch (InterruptedException _) {
-
+                    collectAndDisplayStatisticsService.collectStatistics();
+                    synchronized (dailyActivities) {
+                        dailyActivities.setCollectStatistics(true);
+                        dailyActivities.notifyAll();
+                    }
                 }
-            });
+            } catch (InterruptedException _) {
 
-            executors.execute(() -> { // Поток со статистикой
-                try {
-                    while (!Thread.interrupted()) {
-                        synchronized (dailyActivities) {
-                            while (!dailyActivities.isTimeToShowStatistics()) {
-                                dailyActivities.wait();
-                            }
-                        }
-                        --daysOfLife;
-                        collectAndDisplayStatisticsService.start();
-                        synchronized (dailyActivities) {
-                            dailyActivities.setGrassPlanted(false);
-                            dailyActivities.setRemoveAndRestoreAnimals(false);
-                            dailyActivities.setAnimalActionsCompleted(false);
-                            dailyActivities.setShownDailyStatistics(true);
-                            dailyActivities.notifyAll();
+            }
+        });
+
+        executors.execute(() -> { // Поток для визуализации
+            try {
+                while (!Thread.interrupted()) {
+                    synchronized (dailyActivities) {
+                        while (!dailyActivities.isTimeToShowStatistics()) {
+                            dailyActivities.wait();
                         }
                     }
-                } catch (InterruptedException _) {
-
+                    collectAndDisplayStatisticsService.printStatistics();
+                    collectAndDisplayStatisticsService.checkStopGame();
+                    collectAndDisplayStatisticsService.resetLapValues();
+                    synchronized (dailyActivities) {
+                        dailyActivities.setGrassPlanted(false);
+                        dailyActivities.setRemoveAndRestoreAnimals(false);
+                        dailyActivities.setAnimalActionsCompleted(false);
+                        dailyActivities.setCollectStatistics(false);
+                        dailyActivities.setShownDailyStatistics(true);
+                        dailyActivities.notifyAll();
+                    }
                 }
-            });
-        }
+            } catch (InterruptedException _) {
+
+            }
+        });
     }
 
 

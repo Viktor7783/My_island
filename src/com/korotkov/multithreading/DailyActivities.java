@@ -4,10 +4,20 @@ public class DailyActivities {
     private boolean isGrassPlanted;
     private boolean isAnimalActionsCompleted;
     private boolean isRemoveAndRestoreAnimals;
+    private boolean isCollectStatistics;
     private boolean isShownDailyStatistics = true;
 
+
+    public boolean isTimeToCollectStatistics() {
+        return isGrassPlanted && isRemoveAndRestoreAnimals && isAnimalActionsCompleted && !isCollectStatistics;
+    }
+
+    public void setCollectStatistics(boolean collectStatistics) {
+        isCollectStatistics = collectStatistics;
+    }
+
     public boolean isTimeToShowStatistics() {
-        return isGrassPlanted && isRemoveAndRestoreAnimals && isAnimalActionsCompleted;
+        return isGrassPlanted && isRemoveAndRestoreAnimals && isAnimalActionsCompleted && isCollectStatistics;
     }
 
     public boolean isTimeToAnimalActions() {

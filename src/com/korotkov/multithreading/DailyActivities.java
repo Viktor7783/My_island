@@ -1,12 +1,20 @@
 package com.korotkov.multithreading;
 
 public class DailyActivities {
+    private boolean isIslandInitialized;
     private boolean isGrassPlanted;
     private boolean isAnimalActionsCompleted;
     private boolean isRemoveAndRestoreAnimals;
     private boolean isCollectStatistics;
     private boolean isShownDailyStatistics = true;
 
+    public boolean isIslandInitialized() {
+        return isIslandInitialized;
+    }
+
+    public void setIslandInitialized(boolean islandInitialized) {
+        isIslandInitialized = islandInitialized;
+    }
 
     public boolean isTimeToCollectStatistics() {
         return isGrassPlanted && isRemoveAndRestoreAnimals && isAnimalActionsCompleted && !isCollectStatistics;

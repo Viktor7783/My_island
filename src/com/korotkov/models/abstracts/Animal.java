@@ -132,11 +132,13 @@ public abstract class Animal extends Entity implements AnimalActions {
             }
             int countOfEatAnimals = random.nextInt(from, to);
             for (Animal animalToEat : animals) {
-                if (animalToEat != this && animalToEat.getClass() == bestAnimalToEat.getClass() && animalToEat.getHealthPercent() > 0) {
-                    this.increaseHealthPercent(animalToEat);
-                    animalToEat.setHealthPercent(0);
-                    if (!this.isEatInThisLap) this.isEatInThisLap = true;
-                    --countOfEatAnimals;
+                synchronized (animalToEat) {
+                    if (animalToEat != this && animalToEat.getClass() == bestAnimalToEat.getClass() && animalToEat.getHealthPercent() > 0) {
+                        this.increaseHealthPercent(animalToEat);
+                        animalToEat.setHealthPercent(0);
+                        if (!this.isEatInThisLap) this.isEatInThisLap = true;
+                        --countOfEatAnimals;
+                    }
                 }
                 if (countOfEatAnimals < 1) break;
             }
@@ -147,20 +149,24 @@ public abstract class Animal extends Entity implements AnimalActions {
     public Animal reproduce(List<Entity> entities) {
         Animal baby = null;
         if (this.getCountBornBaby() > 0) {
-            List<Animal> currentAnimals = entities.stream().filter(e -> e.getClass() == this.getClass()).map(e -> (Animal) e).filter(a -> a.getHealthPercent() > 0).toList();
-            Optional<Animal> optionalAnimal = (currentAnimals.stream().filter(a -> a != this && !a.isBornNewAnimal() && a.getCountBornBaby() > 0).findFirst());
-            if (optionalAnimal.isPresent() && !this.isBornNewAnimal()) {
-                Animal animalForBorn = optionalAnimal.get();
-                this.setBornNewAnimal(true); //Попытка была
-                this.decreaseCountBornBaby();
-                animalForBorn.setBornNewAnimal(true);
-                animalForBorn.decreaseCountBornBaby();
-                if (currentAnimals.size() < this.getMaxCountOnField()) {
-                    try {
-                        baby = this.getClass().getDeclaredConstructor(Entity.class).newInstance(animalForBorn);
-                    } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-                             NoSuchMethodException e) {
-                        System.out.printf(REPRODUCE_ERROR, this, animalForBorn);
+            synchronized (this) {
+                List<Animal> currentAnimals = entities.stream().filter(e -> e.getClass() == this.getClass()).map(e -> (Animal) e).filter(a -> a.getHealthPercent() > 0).toList();
+                Optional<Animal> optionalAnimal = (currentAnimals.stream().filter(a -> a != this && !a.isBornNewAnimal() && a.getCountBornBaby() > 0).findFirst());
+                if (optionalAnimal.isPresent() && !this.isBornNewAnimal()) {
+                    Animal animalForBorn = optionalAnimal.get();
+                    synchronized (animalForBorn) {
+                        this.setBornNewAnimal(true); //Попытка была
+                        this.decreaseCountBornBaby();
+                        animalForBorn.setBornNewAnimal(true);
+                        animalForBorn.decreaseCountBornBaby();
+                        if (currentAnimals.size() < this.getMaxCountOnField()) {
+                            try {
+                                baby = this.getClass().getDeclaredConstructor(Entity.class).newInstance(animalForBorn);
+                            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                                     NoSuchMethodException e) {
+                                System.out.printf(REPRODUCE_ERROR, this, animalForBorn);
+                            }
+                        }
                     }
                 }
             }

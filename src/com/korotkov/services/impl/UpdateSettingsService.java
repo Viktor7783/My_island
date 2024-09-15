@@ -20,6 +20,7 @@ import java.util.*;
 import static com.korotkov.config.Constants.*;
 
 public class UpdateSettingsService {
+
     private final IslandConfig islandConfig;
     private final EntityCharacteristicConfig entityCharacteristicConfig;
     private final BufferedReader reader;
@@ -30,6 +31,10 @@ public class UpdateSettingsService {
         this.islandConfig = islandConfig;
         this.entityCharacteristicConfig = entityCharacteristicConfig;
         reader = new BufferedReader(new InputStreamReader(System.in));
+    }
+
+    public IslandConfig getIslandConfig() {
+        return islandConfig;
     }
 
     public void updateSettings() {
@@ -51,7 +56,7 @@ public class UpdateSettingsService {
                 }
             }
         } else if (intNumber == 2) {
-            exitSettings(reader);
+            exitSettings(reader); // todo: для потока 6 убрать закрывание reader!!!
         } else exitGame(reader);
     }
 

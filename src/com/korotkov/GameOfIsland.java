@@ -59,16 +59,43 @@ public class GameOfIsland {
     }
 
     public void start() {
-        System.out.println(GREETINGS);
-        updateSettingsService.updateSettings();
-        System.out.println(GO_GO_GO);
-        island = createIsland(islandConfig);
-        fillIslandAnimalsAndPlants(island, random, entityCharacteristicConfig);
-        moveService = new MoveServiceImpl(island, islandConfig);
-        collectAndDisplayStatisticsService = new CollectAndDisplayStatisticsServiceImpl(island, updateSettingsService, imagesOfEntitiesConfig, islandConfig);
+
+        executors.execute(() -> { // Поток для прослушивания консоли: для установки новых настроек/ для окончания игры/ для постановки на паузу
+            if (!dailyActivities.isIslandInitialized()) {
+                System.out.println(GREETINGS);
+                updateSettingsService.updateSettings();
+                System.out.println(GO_GO_GO);
+                island = createIsland(islandConfig);
+                fillIslandAnimalsAndPlants(island, random, entityCharacteristicConfig);
+                moveService = new MoveServiceImpl(island, islandConfig);
+                collectAndDisplayStatisticsService = new CollectAndDisplayStatisticsServiceImpl(island, updateSettingsService, imagesOfEntitiesConfig);
+                synchronized (dailyActivities) {
+                    dailyActivities.setIslandInitialized(true);
+                    dailyActivities.notifyAll();
+                }
+            }
+            // Далее входим в цикл прослушки консоли!
+            //Далее варианты меню паузы:
+
+            System.out.println("""
+                    Пауза/Продолжить игру: "p"
+                    """);
+            System.out.println("""
+                    Options: "o"
+                    Restart: "r"
+                    Exit:    "e"
+                    """);
+
+        });
+
 
         executors.execute(() -> {//Поток на удаление дохлятины и восстановление показателей животных
                     try {
+                        while (!dailyActivities.isIslandInitialized()) {
+                            synchronized (dailyActivities) {
+                                dailyActivities.wait();
+                            }
+                        }
                         while (!Thread.interrupted()) {
                             synchronized (dailyActivities) {
                                 while (!dailyActivities.isShownDailyStatistics()) {
@@ -96,6 +123,11 @@ public class GameOfIsland {
 
         executors.execute(() -> {//Поток на удаление съеденных и посадку новых растений работает параллельно с дохлятиной
                     try {
+                        while (!dailyActivities.isIslandInitialized()) {
+                            synchronized (dailyActivities) {
+                                dailyActivities.wait();
+                            }
+                        }
                         while (!Thread.interrupted()) {
                             synchronized (dailyActivities) {
                                 while (!dailyActivities.isShownDailyStatistics()) {
@@ -264,8 +296,21 @@ public class GameOfIsland {
 
 class MyTestClass { //TODO: Удалить перед pullRequest!!!
     public static void main(String[] args) {
-        String s = "\uD83D\uDC01";
-        System.out.println(s);
+        ExecutorService executors = Executors.newCachedThreadPool();
+        executors.execute(() -> {
+            synchronized (executors) {
+                while (true) {
+                    try {
+                        executors.wait();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        });
+        executors.shutdown();
+        System.exit(0);
+
     }
 }
 

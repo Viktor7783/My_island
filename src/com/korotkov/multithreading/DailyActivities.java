@@ -2,11 +2,20 @@ package com.korotkov.multithreading;
 
 public class DailyActivities {
     private boolean isIslandInitialized;
+    private boolean isPressPause;
     private boolean isGrassPlanted;
     private boolean isAnimalActionsCompleted;
     private boolean isRemoveAndRestoreAnimals;
     private boolean isCollectStatistics;
     private boolean isShownDailyStatistics = true;
+
+    public boolean isPressPause() {
+        return isPressPause;
+    }
+
+    public void setPressPause(boolean pressPause) {
+        isPressPause = pressPause;
+    }
 
     public boolean isIslandInitialized() {
         return isIslandInitialized;

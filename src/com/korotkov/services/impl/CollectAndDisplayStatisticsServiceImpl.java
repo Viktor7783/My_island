@@ -174,24 +174,36 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
     }
 
     public void checkStopGame() {
-        if (dayNumber >= updateSettingsService.getIslandConfig().getDaysOfLife()) System.exit(0);
+        if (dayNumber >= updateSettingsService.getIslandConfig().getDaysOfLife()) {
+            System.out.println(GAME_OVER);
+            System.exit(0);
+        }
         int stopNumber = updateSettingsService.getNumberOfStopCondition();
         if (stopNumber == 1) {
-            if (liveAnimals.isEmpty()) System.exit(0);
+            if (liveAnimals.isEmpty()) {
+                System.out.println(GAME_OVER);
+                System.exit(0);
+            }
         } else if (stopNumber == 2) {
             AtomicInteger predatorsCount = new AtomicInteger();
             island.getIsland().values().forEach(list -> list.forEach(entity -> {
                 if (entity instanceof Predator && ((Predator) entity).getHealthPercent() > 0)
                     predatorsCount.incrementAndGet();
             }));
-            if (predatorsCount.get() == 0) System.exit(0);
+            if (predatorsCount.get() == 0) {
+                System.out.println(GAME_OVER);
+                System.exit(0);
+            }
         } else if (stopNumber == 3) {
             AtomicInteger herbivoresCount = new AtomicInteger();
             island.getIsland().values().forEach(list -> list.forEach(entity -> {
                 if (entity instanceof Herbivore && ((Herbivore) entity).getHealthPercent() > 0)
                     herbivoresCount.incrementAndGet();
             }));
-            if (herbivoresCount.get() == 0) System.exit(0);
+            if (herbivoresCount.get() == 0) {
+                System.out.println(GAME_OVER);
+                System.exit(0);
+            }
         }
     }
 }

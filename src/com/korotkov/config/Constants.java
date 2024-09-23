@@ -6,11 +6,13 @@ public class Constants {
     public static final String PATH_TO_POSSIBILITY_OF_EATING = "resources/possibility_of_eating.json";
     public static final String PATH_TO_ISLAND_SETTINGS = "resources/settings.properties";
 
-    public static final String GREETINGS = """
+    public static final String GREETINGS7 = """
             $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
             !!! Добро пожаловать в игру GAME_OF_ISLAND !!!
             $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
             """;
+    public static final String DOLLARS = "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$";
+    public static final String GREETINGS = "!!! Добро пожаловать в игру GAME_OF_ISLAND !!!";
 
     public static final String CHANGE_SETTINGS = """
             ***********************************************************************
@@ -20,6 +22,15 @@ public class Constants {
             Для выхода из игры нажмите любую другую цифру!
             [!!!ВНИМАНИЕ!!! Пауза/настройки: "p"]
             ***********************************************************************
+            """;
+    public static final String PAUSE_MENU = """
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+               МЕНЮ ПАУЗЫ:
+            c - Continue game
+            o - Options
+            r - Restart game
+            e - Exit game
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             """;
 
     public static final String CHOOSE_YOUR_DESTINY = """

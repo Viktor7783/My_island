@@ -27,10 +27,10 @@ public class UpdateSettingsService {
     private int intNumber;
     private int numberOfStopCondition;
 
-    public UpdateSettingsService(IslandConfig islandConfig, EntityCharacteristicConfig entityCharacteristicConfig) {
+    public UpdateSettingsService(IslandConfig islandConfig, EntityCharacteristicConfig entityCharacteristicConfig, BufferedReader reader) {
         this.islandConfig = islandConfig;
         this.entityCharacteristicConfig = entityCharacteristicConfig;
-        reader = new BufferedReader(new InputStreamReader(System.in));
+        this.reader = reader;
     }
 
     public IslandConfig getIslandConfig() {
@@ -49,14 +49,14 @@ public class UpdateSettingsService {
                     case 2 -> changeEntitySettings();
                     case 3 -> setConditionsForStopGame();
                     case 4 -> {
-                        exitSettings(reader);
+                        System.out.println(EXIT_FROM_SETTINGS);//exitSettings(reader);
                         return;
                     }
                     default -> exitGame(reader);
                 }
             }
         } else if (intNumber == 2) {
-            exitSettings(reader); // todo: для потока 6 убрать закрывание reader!!!
+            System.out.println(EXIT_FROM_SETTINGS);//exitSettings(reader);
         } else exitGame(reader);
     }
 
@@ -278,14 +278,14 @@ public class UpdateSettingsService {
         }
     }
 
-    private void exitGame(BufferedReader reader) {
+    public void exitGame(BufferedReader reader) {
         System.out.println(GAME_OVER);
         safeCloseReader(reader);
         System.exit(0);
     }
 
-    private void exitSettings(BufferedReader reader) {
+    /*private void exitSettings(BufferedReader reader) {
         System.out.println(EXIT_FROM_SETTINGS);
         safeCloseReader(reader);
-    }
+    }*/
 }

@@ -8,6 +8,15 @@ public class DailyActivities {
     private boolean isRemoveAndRestoreAnimals;
     private boolean isCollectStatistics;
     private boolean isShownDailyStatistics = true;
+    private boolean isBeginPrintStatistics;
+
+    public boolean isBeginPrintStatistics() {
+        return isBeginPrintStatistics;
+    }
+
+    public void setBeginPrintStatistics(boolean beginPrintStatistics) {
+        isBeginPrintStatistics = beginPrintStatistics;
+    }
 
     public boolean isPressPause() {
         return isPressPause;

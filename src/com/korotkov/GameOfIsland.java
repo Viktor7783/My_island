@@ -81,41 +81,48 @@ public class GameOfIsland {
                     dailyActivities.notifyAll();
                 }
             }
-            // Далее входим в цикл прослушки консоли!
             //Далее варианты меню паузы:
             while (!Thread.interrupted()) {
                 try {
                     if (reader.readLine().equalsIgnoreCase("p")) {
                         synchronized (dailyActivities) {
                             dailyActivities.setPressPause(true);
-                            dailyActivities.notifyAll(); //todo: учесть нажатие паузы в каждом потоке и дождаться остановки всех потоков
+                            dailyActivities.notifyAll();
                         }
                         //Меню паузы:
-                        System.out.println(PAUSE_MENU);
-                        String pauseButton;
-                        while (!Thread.interrupted()) { //Бесконечный цикл
-                            pauseButton = reader.readLine();
-                            switch (pauseButton.toLowerCase()) {
-                                case "c" -> { // Continue game
-                                    synchronized (dailyActivities) {
-                                        dailyActivities.setPressPause(false); //todo: также учесть отжатие паузы и продолжение игры в каждом потоке
-                                    }
-                                }
-                                case "o" -> { // Options todo: (дописываем методы настроек для уже созданного острова в updateSettingsService)
-
-                                }
-                                case "r" -> { // Restart game
-                                    executors.shutdown(); //сначала остановим все потоки
-                                    executors = Executors.newCachedThreadPool(); // делаем новый пулл потоков
-                                    executors.execute(); // запускаем все потоки заново!!!
-                                }
-                                case "e" -> { // Exit game
-                                    updateSettingsService.exitGame(reader);
-                                }
+                        synchronized (dailyActivities) {
+                            while (dailyActivities.isBeginPrintStatistics()) {
+                                dailyActivities.wait();
                             }
                         }
+                        System.out.println(PAUSE_MENU);
+                        String pauseButton;
+                        while (!(pauseButton = reader.readLine()).equalsIgnoreCase("c") && !pauseButton.equalsIgnoreCase("o") && !pauseButton.equalsIgnoreCase("r") && !pauseButton.equalsIgnoreCase("e") && !Thread.interrupted()) {
+                            System.out.println("Пожалуйста выберите одну из предложенных букв: c/o/r/e");
+                        }
+                        switch (pauseButton.toLowerCase()) {
+                            case "c" -> { // Continue game
+                                synchronized (dailyActivities) {
+                                    dailyActivities.setPressPause(false); //todo: также учесть отжатие паузы и продолжение игры в каждом потоке
+                                    dailyActivities.notifyAll();
+                                }
+                            }
+                            case "o" -> { // Options todo: (дописываем методы настроек для уже созданного острова в updateSettingsService)
+
+                            }
+                            case "r" -> { // Restart game
+                                executors.shutdown(); //сначала остановим все потоки
+                                executors = Executors.newCachedThreadPool(); // делаем новый пулл потоков todo: или new GameIsland????
+                                synchronized (dailyActivities) {
+                                    dailyActivities.setPressPause(false);
+                                    dailyActivities.notifyAll();
+                                }
+                                //executors.execute(); // запускаем все потоки заново!!!
+                            }
+                            case "e" -> updateSettingsService.exitGame(reader); // Exit game
+                        }
                     }
-                } catch (IOException _) {
+                } catch (IOException | InterruptedException _) {
                 }
             }
         });
@@ -130,7 +137,7 @@ public class GameOfIsland {
                         }
                         while (!Thread.interrupted()) {
                             synchronized (dailyActivities) {
-                                while (!dailyActivities.isShownDailyStatistics() && dailyActivities.isPressPause()) {
+                                while (!dailyActivities.isShownDailyStatistics() || dailyActivities.isPressPause()) { //todo: вынести ispressPause в отдельную проверку!!!
                                     dailyActivities.wait();
                                 }
                             }
@@ -138,7 +145,7 @@ public class GameOfIsland {
                             synchronized (dailyActivities) {
                                 dailyActivities.setRemoveAndRestoreAnimals(true);
                                 dailyActivities.notifyAll();
-                                while (!dailyActivities.isGrassPlanted() && dailyActivities.isPressPause()) {
+                                while (!dailyActivities.isGrassPlanted() || dailyActivities.isPressPause()) {
                                     dailyActivities.wait();
                                 }
                                 if (dailyActivities.isShownDailyStatistics()) {
@@ -161,7 +168,7 @@ public class GameOfIsland {
                         }
                         while (!Thread.interrupted()) {
                             synchronized (dailyActivities) {
-                                while (!dailyActivities.isShownDailyStatistics() && dailyActivities.isPressPause()) {
+                                while (!dailyActivities.isShownDailyStatistics() || dailyActivities.isPressPause()) {
                                     dailyActivities.wait();
                                 }
                             }
@@ -170,7 +177,7 @@ public class GameOfIsland {
                             synchronized (dailyActivities) {
                                 dailyActivities.setGrassPlanted(true);
                                 dailyActivities.notifyAll();
-                                while (!dailyActivities.isRemoveAndRestoreAnimals() && dailyActivities.isPressPause()) {
+                                while (!dailyActivities.isRemoveAndRestoreAnimals() || dailyActivities.isPressPause()) {
                                     dailyActivities.wait();
                                 }
                                 if (dailyActivities.isShownDailyStatistics()) {
@@ -188,7 +195,7 @@ public class GameOfIsland {
             try {
                 while (!Thread.interrupted()) {
                     synchronized (dailyActivities) {
-                        while (!dailyActivities.isTimeToAnimalActions() && dailyActivities.isPressPause()) {
+                        while (!dailyActivities.isTimeToAnimalActions() || dailyActivities.isPressPause()) {
                             dailyActivities.wait();
                         }
                     }
@@ -224,7 +231,6 @@ public class GameOfIsland {
                     }
                 }
             } catch (InterruptedException _) {
-
             }
         });
 
@@ -232,7 +238,7 @@ public class GameOfIsland {
             try {
                 while (!Thread.interrupted()) {
                     synchronized (dailyActivities) {
-                        while (!dailyActivities.isTimeToCollectStatistics() && dailyActivities.isPressPause()) {
+                        while (!dailyActivities.isTimeToCollectStatistics() || dailyActivities.isPressPause()) {
                             dailyActivities.wait();
                         }
                     }
@@ -251,11 +257,19 @@ public class GameOfIsland {
             try {
                 while (!Thread.interrupted()) {
                     synchronized (dailyActivities) {
-                        while (!dailyActivities.isTimeToShowStatistics() && dailyActivities.isPressPause()) {
+                        while (!dailyActivities.isTimeToShowStatistics() || dailyActivities.isPressPause()) {
                             dailyActivities.wait();
                         }
                     }
+                    synchronized (dailyActivities) {
+                        dailyActivities.setBeginPrintStatistics(true);
+                        dailyActivities.notifyAll();
+                    }
                     collectAndDisplayStatisticsService.printStatistics();
+                    synchronized (dailyActivities) {
+                        dailyActivities.setBeginPrintStatistics(false);
+                        dailyActivities.notifyAll();
+                    }
                     synchronized (dailyActivities) {
                         while (dailyActivities.isPressPause()) {
                             dailyActivities.wait();
@@ -351,21 +365,11 @@ public class GameOfIsland {
 
 class MyTestClass { //TODO: Удалить перед pullRequest!!!
     public static void main(String[] args) {
-        ExecutorService executors = Executors.newCachedThreadPool();
-        executors.execute(() -> {
-            synchronized (executors) {
-                while (true) {
-                    try {
-                        executors.wait();
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-        });
-        executors.shutdown();
-        System.exit(0);
-
+        Scanner scanner = new Scanner(System.in);
+        String text;
+        while (!(text = scanner.nextLine()).equalsIgnoreCase("c") && !text.equalsIgnoreCase("o") && !text.equalsIgnoreCase("r") && !text.equalsIgnoreCase("e") && !Thread.interrupted()) {
+            System.out.println("Введите нужную букву!");// ))))))))))))))))))
+        }
     }
 }
 

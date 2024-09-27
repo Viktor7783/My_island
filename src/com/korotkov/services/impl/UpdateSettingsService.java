@@ -14,7 +14,6 @@ import com.korotkov.models.predators.Predator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.*;
 
 import static com.korotkov.config.Constants.*;
@@ -49,24 +48,42 @@ public class UpdateSettingsService {
                     case 2 -> changeEntitySettings();
                     case 3 -> setConditionsForStopGame();
                     case 4 -> {
-                        System.out.println(EXIT_FROM_SETTINGS);//exitSettings(reader);
+                        System.out.println(EXIT_FROM_SETTINGS);
                         return;
                     }
                     default -> exitGame(reader);
                 }
             }
         } else if (intNumber == 2) {
-            System.out.println(EXIT_FROM_SETTINGS);//exitSettings(reader);
+            System.out.println(EXIT_FROM_SETTINGS);
         } else exitGame(reader);
+    }
+
+    public void updateLiveIslandSettings() {
+        while (true) {
+            System.out.println(CHOOSE_YOUR_DESTINY);
+            intNumber = safeIntegerRead(reader);
+            switch (intNumber) {
+                case 1 -> System.out.println("Изменение настроек живого острова"); //todo
+                case 2 -> System.out.println("Изменение настроек животных и растений");//todo
+                case 3 -> setConditionsForStopGame();
+                case 4 -> {
+                    System.out.println(EXIT_FROM_SETTINGS);
+                    return;
+                }
+                default -> exitGame(reader);
+
+            }
+        }
     }
 
     private void setConditionsForStopGame() {
         System.out.println(CHOOSE_STOP_CONDITIONS);
         int intNumber = safeIntegerRead(reader);
         switch (intNumber) {
-            case 1 -> numberOfStopCondition = 1;// Умерли все животные
-            case 2 -> numberOfStopCondition = 2; // Умерли все хищники
-            case 3 -> numberOfStopCondition = 3; // Умерли все травоядные
+            case 1 -> numberOfStopCondition = ALL_ANIMALS_DIED;
+            case 2 -> numberOfStopCondition = ALL_PREDATORS_DIED;
+            case 3 -> numberOfStopCondition = ALL_HERBIVORES_DIED;
             case 4 -> {
             } //Выход в главное меню настроек
             default -> exitGame(reader);
@@ -283,9 +300,4 @@ public class UpdateSettingsService {
         safeCloseReader(reader);
         System.exit(0);
     }
-
-    /*private void exitSettings(BufferedReader reader) {
-        System.out.println(EXIT_FROM_SETTINGS);
-        safeCloseReader(reader);
-    }*/
 }

@@ -179,12 +179,12 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
             System.exit(0);
         }
         int stopNumber = updateSettingsService.getNumberOfStopCondition();
-        if (stopNumber == 1) {
+        if (stopNumber == ALL_ANIMALS_DIED) {
             if (liveAnimals.isEmpty()) {
                 System.out.println(GAME_OVER);
                 System.exit(0);
             }
-        } else if (stopNumber == 2) {
+        } else if (stopNumber == ALL_PREDATORS_DIED) {
             AtomicInteger predatorsCount = new AtomicInteger();
             island.getIsland().values().forEach(list -> list.forEach(entity -> {
                 if (entity instanceof Predator && ((Predator) entity).getHealthPercent() > 0)
@@ -194,7 +194,7 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
                 System.out.println(GAME_OVER);
                 System.exit(0);
             }
-        } else if (stopNumber == 3) {
+        } else if (stopNumber == ALL_HERBIVORES_DIED) {
             AtomicInteger herbivoresCount = new AtomicInteger();
             island.getIsland().values().forEach(list -> list.forEach(entity -> {
                 if (entity instanceof Herbivore && ((Herbivore) entity).getHealthPercent() > 0)

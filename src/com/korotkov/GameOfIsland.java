@@ -43,7 +43,7 @@ public class GameOfIsland {
     private MoveService moveService;
     private CollectAndDisplayStatisticsServiceImpl collectAndDisplayStatisticsService;
     private final DailyActivities dailyActivities;
-    private ExecutorService executors;
+    private ExecutorService executor;
     private final BufferedReader reader;
 
     public GameOfIsland() {
@@ -57,7 +57,7 @@ public class GameOfIsland {
         animalConfig = new AnimalConfig(PATH_TO_ISLAND_SETTINGS);
         updateSettingsService = new UpdateSettingsService(islandConfig, entityCharacteristicConfig, reader);
         dailyActivities = new DailyActivities();
-        executors = Executors.newCachedThreadPool();
+        executor = Executors.newCachedThreadPool();
     }
 
     public static void main(String[] args) {
@@ -67,7 +67,8 @@ public class GameOfIsland {
     public void start() {
         //todo: вынести потоки в отдельные классы и добавить метод по запуску всех потоков
 
-        executors.execute(() -> { // Поток для прослушивания консоли: для установки новых настроек/ для окончания игры/ для постановки на паузу
+
+        executor.execute(() -> { // Поток для прослушивания консоли: для установки новых настроек/ для окончания игры/ для постановки на паузу
             if (!dailyActivities.isIslandInitialized()) {
                 greetings();
                 updateSettingsService.updateSettings();
@@ -95,31 +96,36 @@ public class GameOfIsland {
                                 dailyActivities.wait();
                             }
                         }
-                        System.out.println(PAUSE_MENU);
-                        String pauseButton;
-                        while (!(pauseButton = reader.readLine()).equalsIgnoreCase("c") && !pauseButton.equalsIgnoreCase("o") && !pauseButton.equalsIgnoreCase("r") && !pauseButton.equalsIgnoreCase("e") && !Thread.interrupted()) {
-                            System.out.println("Пожалуйста выберите одну из предложенных букв: c/o/r/e");
-                        }
-                        switch (pauseButton.toLowerCase()) {
-                            case "c" -> { // Continue game
-                                synchronized (dailyActivities) {
-                                    dailyActivities.setPressPause(false); //todo: также учесть отжатие паузы и продолжение игры в каждом потоке
-                                    dailyActivities.notifyAll();
+                        while (dailyActivities.isPressPause()) {
+                            System.out.println(PAUSE_MENU);
+                            String pauseButton;
+                            while (!(pauseButton = reader.readLine()).equalsIgnoreCase("c") && !pauseButton.equalsIgnoreCase("o") && !pauseButton.equalsIgnoreCase("r") && !pauseButton.equalsIgnoreCase("e") && !Thread.interrupted()) {
+                                System.out.println(CHOOSE_CORE);
+                            }
+                            switch (pauseButton.toLowerCase()) {
+                                case "c" -> { // Continue game
+                                    synchronized (dailyActivities) {
+                                        dailyActivities.setPressPause(false);
+                                        dailyActivities.notifyAll();
+                                    }
                                 }
-                            }
-                            case "o" -> { // Options todo: (дописываем методы настроек для уже созданного острова в updateSettingsService)
-
-                            }
-                            case "r" -> { // Restart game
-                                executors.shutdown(); //сначала остановим все потоки
-                                executors = Executors.newCachedThreadPool(); // делаем новый пулл потоков todo: или new GameIsland????
-                                synchronized (dailyActivities) {
-                                    dailyActivities.setPressPause(false);
-                                    dailyActivities.notifyAll();
+                                case "o" -> { // Options todo: (дописываем методы настроек для уже созданного острова в updateSettingsService)
+                                    //todo: Вызов updateSettings на уже готовом острове!!!
+                                    updateSettingsService.updateLiveIslandSettings();
                                 }
-                                //executors.execute(); // запускаем все потоки заново!!!
+                                case "r" -> { // Restart game
+                                    // executors.shutdownNow(); //сначала остановим все потоки
+                                    ExecutorService executorService = executor;
+                                    executor = Executors.newCachedThreadPool();
+                                    executor.execute(() -> {
+                                        while (true) {
+                                            System.out.println("Даём на выполнение заново все задачи!!!");//todo: вынести задачи в переменные и дать на выполнение
+                                        }
+                                    });
+                                    executorService.shutdownNow();
+                                }
+                                case "e" -> updateSettingsService.exitGame(reader); // Exit game
                             }
-                            case "e" -> updateSettingsService.exitGame(reader); // Exit game
                         }
                     }
                 } catch (IOException | InterruptedException _) {
@@ -128,7 +134,7 @@ public class GameOfIsland {
         });
 
 
-        executors.execute(() -> {//Поток на удаление дохлятины и восстановление показателей животных
+        executor.execute(() -> {//Поток на удаление дохлятины и восстановление показателей животных
                     try {
                         while (!dailyActivities.isIslandInitialized()) {
                             synchronized (dailyActivities) {
@@ -137,7 +143,7 @@ public class GameOfIsland {
                         }
                         while (!Thread.interrupted()) {
                             synchronized (dailyActivities) {
-                                while (!dailyActivities.isShownDailyStatistics() || dailyActivities.isPressPause()) { //todo: вынести ispressPause в отдельную проверку!!!
+                                while (!dailyActivities.isShownDailyStatistics() || dailyActivities.isPressPause()) {
                                     dailyActivities.wait();
                                 }
                             }
@@ -159,7 +165,7 @@ public class GameOfIsland {
                 }
         );
 
-        executors.execute(() -> {//Поток на удаление съеденных и посадку новых растений работает параллельно с дохлятиной
+        executor.execute(() -> {//Поток на удаление съеденных и посадку новых растений работает параллельно с дохлятиной
                     try {
                         while (!dailyActivities.isIslandInitialized()) {
                             synchronized (dailyActivities) {
@@ -191,7 +197,7 @@ public class GameOfIsland {
                 }
         );
 
-        executors.execute(() -> { // поток AnimalActions - после grassPlanted и animalsRemoveAndRestore
+        executor.execute(() -> { // поток AnimalActions - после grassPlanted и animalsRemoveAndRestore
             try {
                 while (!Thread.interrupted()) {
                     synchronized (dailyActivities) {
@@ -234,7 +240,7 @@ public class GameOfIsland {
             }
         });
 
-        executors.execute(() -> { //Поток на сбор статистики
+        executor.execute(() -> { //Поток на сбор статистики
             try {
                 while (!Thread.interrupted()) {
                     synchronized (dailyActivities) {
@@ -253,7 +259,7 @@ public class GameOfIsland {
             }
         });
 
-        executors.execute(() -> { // Поток для визуализации
+        executor.execute(() -> { // Поток для визуализации
             try {
                 while (!Thread.interrupted()) {
                     synchronized (dailyActivities) {
@@ -343,7 +349,7 @@ public class GameOfIsland {
 
     private void greetings() {
         System.out.println(DOLLARS);
-        System.out.println("ПРИВЕТ, АНТОН!:)");
+        System.out.println("ПРИВЕТ, АНТОН!\uD83D\uDE09");
         for (char c : GREETINGS.toCharArray()) {
             try {
                 TimeUnit.MILLISECONDS.sleep(100);
@@ -364,12 +370,15 @@ public class GameOfIsland {
 }
 
 class MyTestClass { //TODO: Удалить перед pullRequest!!!
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        String text;
-        while (!(text = scanner.nextLine()).equalsIgnoreCase("c") && !text.equalsIgnoreCase("o") && !text.equalsIgnoreCase("r") && !text.equalsIgnoreCase("e") && !Thread.interrupted()) {
-            System.out.println("Введите нужную букву!");// ))))))))))))))))))
-        }
+    public static void main(String[] args) throws InterruptedException {
+        ExecutorService executor = Executors.newCachedThreadPool();
+        executor.execute(() -> {
+            while (!Thread.interrupted()) {
+                System.out.println("PLAY!!!");
+            }
+        });
+        TimeUnit.MILLISECONDS.sleep(100);
+        executor.shutdownNow();
     }
 }
 

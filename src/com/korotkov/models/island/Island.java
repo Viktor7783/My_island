@@ -51,12 +51,6 @@ public class Island implements IslandActions {
 
     @Override
     public void removeEatenPlants() {
-        //island.values().forEach(list -> list.removeIf(entity -> entity instanceof Plant && ((Plant) entity).isEaten()));
-        /*island.values().forEach(list -> {
-            synchronized (list) {
-                list.removeIf(entity -> entity instanceof Plant && ((Plant) entity).isEaten());
-            }
-        });*/
         List<List<Entity>> listOfEntityLists = island.values().stream().toList();
         for (int i = listOfEntityLists.size() - 1; i >= 0; i--) {
             synchronized (listOfEntityLists.get(i)) {

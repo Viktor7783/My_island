@@ -9,8 +9,11 @@ import com.korotkov.models.abstracts.Animal;
 import com.korotkov.models.abstracts.Entity;
 import com.korotkov.models.enums.Action;
 import com.korotkov.models.enums.EntityType;
+import com.korotkov.models.herbivores.Herbivore;
+import com.korotkov.models.herbivores.Mouse;
 import com.korotkov.models.island.Field;
 import com.korotkov.models.island.Island;
+import com.korotkov.models.predators.Predator;
 import com.korotkov.multithreading.DailyActivities;
 import com.korotkov.services.impl.CollectAndDisplayStatisticsServiceImpl;
 import com.korotkov.config.ImagesOfEntitiesConfig;
@@ -38,25 +41,26 @@ public class GameOfIsland {
     private final PossibilityOfEatingConfig possibilityOfEatingConfig;
     private final IslandConfig islandConfig;
     private final AnimalConfig animalConfig;
-    private final UpdateSettingsService updateSettingsService;
+    private UpdateSettingsService updateSettingsService;
     private Island island;
     private MoveService moveService;
     private CollectAndDisplayStatisticsServiceImpl collectAndDisplayStatisticsService;
     private final DailyActivities dailyActivities;
     private ExecutorService executor;
-    private final BufferedReader reader;
+    private BufferedReader reader;
+    private ExecutorService shutdownExecutor;
 
     public GameOfIsland() {
         ObjectMapper objectMapper = new ObjectMapper();
         random = new Random();
-        reader = new BufferedReader(new InputStreamReader(System.in));
         entityCharacteristicConfig = new EntityCharacteristicConfig(objectMapper, PATH_TO_ENTITY_CHARACTERISTIC);
         imagesOfEntitiesConfig = new ImagesOfEntitiesConfig(objectMapper, PATH_TO_IMAGES_OF_ENTITIES);
         possibilityOfEatingConfig = new PossibilityOfEatingConfig(objectMapper, PATH_TO_POSSIBILITY_OF_EATING, entityCharacteristicConfig.getEntityMapConfig());
         islandConfig = new IslandConfig(PATH_TO_ISLAND_SETTINGS);
         animalConfig = new AnimalConfig(PATH_TO_ISLAND_SETTINGS);
-        updateSettingsService = new UpdateSettingsService(islandConfig, entityCharacteristicConfig, reader);
         dailyActivities = new DailyActivities();
+        reader = new BufferedReader(new InputStreamReader(System.in));
+        updateSettingsService = new UpdateSettingsService(islandConfig, entityCharacteristicConfig, reader);
         executor = Executors.newCachedThreadPool();
     }
 
@@ -66,7 +70,6 @@ public class GameOfIsland {
 
     public void start() {
         //todo: вынести потоки в отдельные классы и добавить метод по запуску всех потоков
-
 
         executor.execute(() -> { // Поток для прослушивания консоли: для установки новых настроек/ для окончания игры/ для постановки на паузу
             if (!dailyActivities.isIslandInitialized()) {
@@ -83,8 +86,8 @@ public class GameOfIsland {
                 }
             }
             //Далее варианты меню паузы:
-            while (!Thread.interrupted()) {
-                try {
+            try {
+                while (!Thread.interrupted()) {
                     if (reader.readLine().equalsIgnoreCase("p")) {
                         synchronized (dailyActivities) {
                             dailyActivities.setPressPause(true);
@@ -96,7 +99,7 @@ public class GameOfIsland {
                                 dailyActivities.wait();
                             }
                         }
-                        while (dailyActivities.isPressPause()) {
+                        while (dailyActivities.isPressPause() && !Thread.interrupted()) {
                             System.out.println(PAUSE_MENU);
                             String pauseButton;
                             while (!(pauseButton = reader.readLine()).equalsIgnoreCase("c") && !pauseButton.equalsIgnoreCase("o") && !pauseButton.equalsIgnoreCase("r") && !pauseButton.equalsIgnoreCase("e") && !Thread.interrupted()) {
@@ -109,27 +112,23 @@ public class GameOfIsland {
                                         dailyActivities.notifyAll();
                                     }
                                 }
-                                case "o" -> { // Options todo: (дописываем методы настроек для уже созданного острова в updateSettingsService)
-                                    //todo: Вызов updateSettings на уже готовом острове!!!
-                                    updateSettingsService.updateLiveIslandSettings();
-                                }
-                                case "r" -> { // Restart game
-                                    // executors.shutdownNow(); //сначала остановим все потоки
-                                    ExecutorService executorService = executor;
-                                    executor = Executors.newCachedThreadPool();
-                                    executor.execute(() -> {
-                                        while (true) {
-                                            System.out.println("Даём на выполнение заново все задачи!!!");//todo: вынести задачи в переменные и дать на выполнение
-                                        }
-                                    });
-                                    executorService.shutdownNow();
+                                case "o" ->
+                                        updateSettingsService.updateLiveIslandSettings(island);//options
+                                case "r" -> {// Restart game
+                                    shutdownExecutor = executor;
+                                    //updateSettingsService.safeCloseReader(reader);
+                                    new GameOfIsland().start();
+                                    shutdownExecutor.shutdownNow();
+                                    TimeUnit.MILLISECONDS.sleep(1);
                                 }
                                 case "e" -> updateSettingsService.exitGame(reader); // Exit game
                             }
                         }
                     }
-                } catch (IOException | InterruptedException _) {
                 }
+            } catch (IOException | InterruptedException _) {
+                System.out.println("interrupted прослушка" + Thread.currentThread().getName());
+
             }
         });
 
@@ -161,6 +160,7 @@ public class GameOfIsland {
                             }
                         }
                     } catch (InterruptedException _) {
+                        System.out.println("Interrupted дохлятина");
                     }
                 }
         );
@@ -193,6 +193,7 @@ public class GameOfIsland {
                             }
                         }
                     } catch (InterruptedException _) {
+                        System.out.println("Interrupted растения");
                     }
                 }
         );
@@ -237,6 +238,7 @@ public class GameOfIsland {
                     }
                 }
             } catch (InterruptedException _) {
+                System.out.println("Interrupted жизнь животных");
             }
         });
 
@@ -255,7 +257,7 @@ public class GameOfIsland {
                     }
                 }
             } catch (InterruptedException _) {
-
+                System.out.println("Interrupted сбор статистики");
             }
         });
 
@@ -286,6 +288,7 @@ public class GameOfIsland {
                     resetDailyActivities();
                 }
             } catch (InterruptedException _) {
+                System.out.println("Interrupted визуализация");
             }
         });
     }
@@ -371,14 +374,9 @@ public class GameOfIsland {
 
 class MyTestClass { //TODO: Удалить перед pullRequest!!!
     public static void main(String[] args) throws InterruptedException {
-        ExecutorService executor = Executors.newCachedThreadPool();
-        executor.execute(() -> {
-            while (!Thread.interrupted()) {
-                System.out.println("PLAY!!!");
-            }
-        });
-        TimeUnit.MILLISECONDS.sleep(100);
-        executor.shutdownNow();
+        Entity entity = new Mouse(1.0, 1, 1, 1.1);
+        System.out.println(entity instanceof Herbivore);
+
     }
 }
 

@@ -31,13 +31,12 @@ public abstract class Animal extends Entity implements AnimalActions {
         isMovedInThisLap = false;
         isBornNewAnimal = false;
         isEatInThisLap = false;
-
     }
 
     protected Animal(Entity entity) {
         super(entity);
         healthPercent = 100;
-        countBornBaby = ((Animal) entity).getCountBornBaby();
+        countBornBaby = 20;
         isMovedInThisLap = false;
         isBornNewAnimal = false;
         isEatInThisLap = false;
@@ -185,13 +184,8 @@ public abstract class Animal extends Entity implements AnimalActions {
     }
 
     public void increaseHealthPercent(Entity entity) {
-        //System.out.println("Животное " + this + " съело " + entity + " и насытилось на % " + (entity.getWeight() * 100 / this.kgToGetFull));
-        // System.out.println("Было % " + healthPercent);
         this.healthPercent += (entity.getWeight() * 100 / this.kgToGetFull);
-        //System.out.println("Сумма % " + healthPercent);
-
         if (this.healthPercent > 100.0) this.healthPercent = 100.0;
-        //System.out.println("Стало % " + healthPercent);
     }
 
     @Override

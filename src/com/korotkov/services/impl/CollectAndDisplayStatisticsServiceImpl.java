@@ -1,7 +1,6 @@
 package com.korotkov.services.impl;
 
 import com.korotkov.config.ImagesOfEntitiesConfig;
-import com.korotkov.config.IslandConfig;
 import com.korotkov.models.abstracts.Animal;
 import com.korotkov.models.abstracts.Entity;
 import com.korotkov.models.herbivores.Herbivore;
@@ -60,7 +59,7 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
 
     @Override
     public void collectStatistics() {
-        island.getIsland().values().forEach(list -> list.forEach(entity -> {
+        island.getIslandCells().values().forEach(list -> list.forEach(entity -> {
             Class<? extends Entity> entityClass = entity.getClass();
             if (entity instanceof Plant plant) {
                 if (plant.isEaten()) {
@@ -186,7 +185,7 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
             }
         } else if (stopNumber == ALL_PREDATORS_DIED) {
             AtomicInteger predatorsCount = new AtomicInteger();
-            island.getIsland().values().forEach(list -> list.forEach(entity -> {
+            island.getIslandCells().values().forEach(list -> list.forEach(entity -> {
                 if (entity instanceof Predator && ((Predator) entity).getHealthPercent() > 0)
                     predatorsCount.incrementAndGet();
             }));
@@ -196,7 +195,7 @@ public class CollectAndDisplayStatisticsServiceImpl implements CollectAndDisplay
             }
         } else if (stopNumber == ALL_HERBIVORES_DIED) {
             AtomicInteger herbivoresCount = new AtomicInteger();
-            island.getIsland().values().forEach(list -> list.forEach(entity -> {
+            island.getIslandCells().values().forEach(list -> list.forEach(entity -> {
                 if (entity instanceof Herbivore && ((Herbivore) entity).getHealthPercent() > 0)
                     herbivoresCount.incrementAndGet();
             }));

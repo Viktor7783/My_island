@@ -5,16 +5,11 @@ import com.korotkov.config.AnimalConfig;
 import com.korotkov.config.EntityCharacteristicConfig;
 import com.korotkov.config.IslandConfig;
 import com.korotkov.config.PossibilityOfEatingConfig;
-import com.korotkov.models.abstracts.Animal;
 import com.korotkov.models.abstracts.Entity;
-import com.korotkov.models.enums.Action;
 import com.korotkov.models.enums.EntityType;
-import com.korotkov.models.herbivores.Herbivore;
-import com.korotkov.models.herbivores.Mouse;
 import com.korotkov.models.island.Field;
 import com.korotkov.models.island.Island;
-import com.korotkov.models.predators.Predator;
-import com.korotkov.multithreading.DailyActivities;
+import com.korotkov.multithreading.*;
 import com.korotkov.services.impl.CollectAndDisplayStatisticsServiceImpl;
 import com.korotkov.config.ImagesOfEntitiesConfig;
 import com.korotkov.services.interfaces.MoveService;
@@ -22,7 +17,6 @@ import com.korotkov.services.impl.MoveServiceImpl;
 import com.korotkov.services.impl.UpdateSettingsService;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -41,14 +35,21 @@ public class GameOfIsland {
     private final PossibilityOfEatingConfig possibilityOfEatingConfig;
     private final IslandConfig islandConfig;
     private final AnimalConfig animalConfig;
-    private UpdateSettingsService updateSettingsService;
+    private final UpdateSettingsService updateSettingsService;
     private Island island;
     private MoveService moveService;
     private CollectAndDisplayStatisticsServiceImpl collectAndDisplayStatisticsService;
     private final DailyActivities dailyActivities;
-    private ExecutorService executor;
-    private BufferedReader reader;
+    private final ExecutorService executor;
+    private final BufferedReader reader;
     private ExecutorService shutdownExecutor;
+    private final PauseMenu pauseMenu;
+    private final RestoreAnimals restoreAnimals;
+    private final RestorePlants restorePlants;
+    private final AnimalsLife animalsLife;
+    private final CollectStatistics collectStatistics;
+    private final ShowStatistics showStatistics;
+
 
     public GameOfIsland() {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -62,6 +63,12 @@ public class GameOfIsland {
         reader = new BufferedReader(new InputStreamReader(System.in));
         updateSettingsService = new UpdateSettingsService(islandConfig, entityCharacteristicConfig, reader);
         executor = Executors.newCachedThreadPool();
+        pauseMenu = new PauseMenu(this);
+        restoreAnimals = new RestoreAnimals(this);
+        restorePlants = new RestorePlants(this);
+        animalsLife = new AnimalsLife(this);
+        collectStatistics = new CollectStatistics(this);
+        showStatistics = new ShowStatistics(this);
     }
 
     public static void main(String[] args) {
@@ -69,250 +76,21 @@ public class GameOfIsland {
     }
 
     public void start() {
-        //todo: вынести потоки в отдельные классы и добавить метод по запуску всех потоков
-
-        executor.execute(() -> { // Поток для прослушивания консоли: для установки новых настроек/ для окончания игры/ для постановки на паузу
-            if (!dailyActivities.isIslandInitialized()) {
-                greetings();
-                updateSettingsService.updateSettings();
-                System.out.println(GO_GO_GO);
-                island = createIsland(islandConfig);
-                fillIslandAnimalsAndPlants(island, random, entityCharacteristicConfig);
-                moveService = new MoveServiceImpl(island, islandConfig);
-                collectAndDisplayStatisticsService = new CollectAndDisplayStatisticsServiceImpl(island, updateSettingsService, imagesOfEntitiesConfig);
-                synchronized (dailyActivities) {
-                    dailyActivities.setIslandInitialized(true);
-                    dailyActivities.notifyAll();
-                }
-            }
-            //Далее варианты меню паузы:
-            try {
-                while (!Thread.interrupted()) {
-                    if (reader.readLine().equalsIgnoreCase("p")) {
-                        synchronized (dailyActivities) {
-                            dailyActivities.setPressPause(true);
-                            dailyActivities.notifyAll();
-                        }
-                        //Меню паузы:
-                        synchronized (dailyActivities) {
-                            while (dailyActivities.isBeginPrintStatistics()) {
-                                dailyActivities.wait();
-                            }
-                        }
-                        while (dailyActivities.isPressPause() && !Thread.interrupted()) {
-                            System.out.println(PAUSE_MENU);
-                            String pauseButton;
-                            while (!(pauseButton = reader.readLine()).equalsIgnoreCase("c") && !pauseButton.equalsIgnoreCase("o") && !pauseButton.equalsIgnoreCase("r") && !pauseButton.equalsIgnoreCase("e") && !Thread.interrupted()) {
-                                System.out.println(CHOOSE_CORE);
-                            }
-                            switch (pauseButton.toLowerCase()) {
-                                case "c" -> { // Continue game
-                                    synchronized (dailyActivities) {
-                                        dailyActivities.setPressPause(false);
-                                        dailyActivities.notifyAll();
-                                    }
-                                }
-                                case "o" ->
-                                        updateSettingsService.updateLiveIslandSettings(island);//options
-                                case "r" -> {// Restart game
-                                    shutdownExecutor = executor;
-                                    //updateSettingsService.safeCloseReader(reader);
-                                    new GameOfIsland().start();
-                                    shutdownExecutor.shutdownNow();
-                                    TimeUnit.MILLISECONDS.sleep(1);
-                                }
-                                case "e" -> updateSettingsService.exitGame(reader); // Exit game
-                            }
-                        }
-                    }
-                }
-            } catch (IOException | InterruptedException _) {
-                System.out.println("interrupted прослушка" + Thread.currentThread().getName());
-
-            }
-        });
-
-
-        executor.execute(() -> {//Поток на удаление дохлятины и восстановление показателей животных
-                    try {
-                        while (!dailyActivities.isIslandInitialized()) {
-                            synchronized (dailyActivities) {
-                                dailyActivities.wait();
-                            }
-                        }
-                        while (!Thread.interrupted()) {
-                            synchronized (dailyActivities) {
-                                while (!dailyActivities.isShownDailyStatistics() || dailyActivities.isPressPause()) {
-                                    dailyActivities.wait();
-                                }
-                            }
-                            island.removeAndRestoreAnimals();
-                            synchronized (dailyActivities) {
-                                dailyActivities.setRemoveAndRestoreAnimals(true);
-                                dailyActivities.notifyAll();
-                                while (!dailyActivities.isGrassPlanted() || dailyActivities.isPressPause()) {
-                                    dailyActivities.wait();
-                                }
-                                if (dailyActivities.isShownDailyStatistics()) {
-                                    dailyActivities.setShownDailyStatistics(false);
-                                    dailyActivities.notifyAll();
-                                }
-                            }
-                        }
-                    } catch (InterruptedException _) {
-                        System.out.println("Interrupted дохлятина");
-                    }
-                }
-        );
-
-        executor.execute(() -> {//Поток на удаление съеденных и посадку новых растений работает параллельно с дохлятиной
-                    try {
-                        while (!dailyActivities.isIslandInitialized()) {
-                            synchronized (dailyActivities) {
-                                dailyActivities.wait();
-                            }
-                        }
-                        while (!Thread.interrupted()) {
-                            synchronized (dailyActivities) {
-                                while (!dailyActivities.isShownDailyStatistics() || dailyActivities.isPressPause()) {
-                                    dailyActivities.wait();
-                                }
-                            }
-                            island.removeEatenPlants();
-                            island.refillPlants(entityCharacteristicConfig, random);
-                            synchronized (dailyActivities) {
-                                dailyActivities.setGrassPlanted(true);
-                                dailyActivities.notifyAll();
-                                while (!dailyActivities.isRemoveAndRestoreAnimals() || dailyActivities.isPressPause()) {
-                                    dailyActivities.wait();
-                                }
-                                if (dailyActivities.isShownDailyStatistics()) {
-                                    dailyActivities.setShownDailyStatistics(false);
-                                    dailyActivities.notifyAll();
-                                }
-                            }
-                        }
-                    } catch (InterruptedException _) {
-                        System.out.println("Interrupted растения");
-                    }
-                }
-        );
-
-        executor.execute(() -> { // поток AnimalActions - после grassPlanted и animalsRemoveAndRestore
-            try {
-                while (!Thread.interrupted()) {
-                    synchronized (dailyActivities) {
-                        while (!dailyActivities.isTimeToAnimalActions() || dailyActivities.isPressPause()) {
-                            dailyActivities.wait();
-                        }
-                    }
-                    //настало время активных животных todo: подумать о синхронизации между животными при поедании друг друга
-                    for (Map.Entry<Field, List<Entity>> fieldListEntry : island.getIsland().entrySet()) {
-                        Field field = fieldListEntry.getKey();
-                        List<Entity> entities = fieldListEntry.getValue();
-                        ListIterator<Entity> entityListIterator = entities.listIterator();
-                        while (entityListIterator.hasNext()) {
-                            Entity entity = entityListIterator.next();
-                            if (entity instanceof Animal animal) {
-                                if (!animal.isBornNewAnimal() && !animal.isMovedInThisLap() && animal.getHealthPercent() > 0) {
-                                    Action action = Action.values()[random.nextInt(Action.values().length)];
-                                    switch (action) {
-                                        case MOVE -> {
-                                            if (animal.getSpeed() > 0)
-                                                moveService.move(animal, random.nextInt(1, animal.getSpeed() + 1), field, animal.chooseDirection(random), entityListIterator);
-                                        }
-                                        case EAT -> animal.eat(entities, possibilityOfEatingConfig, random);
-                                        case REPRODUCE -> {
-                                            Animal baby = animal.reproduce(entities);
-                                            if (baby != null) entityListIterator.add(baby);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    island.decreaseAnimalsHealthIfNotEat(animalConfig);
-                    synchronized (dailyActivities) {
-                        dailyActivities.setAnimalActionsCompleted(true);
-                        dailyActivities.notifyAll();
-                    }
-                }
-            } catch (InterruptedException _) {
-                System.out.println("Interrupted жизнь животных");
-            }
-        });
-
-        executor.execute(() -> { //Поток на сбор статистики
-            try {
-                while (!Thread.interrupted()) {
-                    synchronized (dailyActivities) {
-                        while (!dailyActivities.isTimeToCollectStatistics() || dailyActivities.isPressPause()) {
-                            dailyActivities.wait();
-                        }
-                    }
-                    collectAndDisplayStatisticsService.collectStatistics();
-                    synchronized (dailyActivities) {
-                        dailyActivities.setCollectStatistics(true);
-                        dailyActivities.notifyAll();
-                    }
-                }
-            } catch (InterruptedException _) {
-                System.out.println("Interrupted сбор статистики");
-            }
-        });
-
-        executor.execute(() -> { // Поток для визуализации
-            try {
-                while (!Thread.interrupted()) {
-                    synchronized (dailyActivities) {
-                        while (!dailyActivities.isTimeToShowStatistics() || dailyActivities.isPressPause()) {
-                            dailyActivities.wait();
-                        }
-                    }
-                    synchronized (dailyActivities) {
-                        dailyActivities.setBeginPrintStatistics(true);
-                        dailyActivities.notifyAll();
-                    }
-                    collectAndDisplayStatisticsService.printStatistics();
-                    synchronized (dailyActivities) {
-                        dailyActivities.setBeginPrintStatistics(false);
-                        dailyActivities.notifyAll();
-                    }
-                    synchronized (dailyActivities) {
-                        while (dailyActivities.isPressPause()) {
-                            dailyActivities.wait();
-                        }
-                    }
-                    collectAndDisplayStatisticsService.checkStopGame();
-                    collectAndDisplayStatisticsService.resetLapValues();
-                    resetDailyActivities();
-                }
-            } catch (InterruptedException _) {
-                System.out.println("Interrupted визуализация");
-            }
-        });
+        executor.execute(pauseMenu);
+        executor.execute(restoreAnimals);
+        executor.execute(restorePlants);
+        executor.execute(animalsLife);
+        executor.execute(collectStatistics);
+        executor.execute(showStatistics);
     }
-
-    private void resetDailyActivities() {
-        synchronized (dailyActivities) {
-            dailyActivities.setGrassPlanted(false);
-            dailyActivities.setRemoveAndRestoreAnimals(false);
-            dailyActivities.setAnimalActionsCompleted(false);
-            dailyActivities.setCollectStatistics(false);
-            dailyActivities.setShownDailyStatistics(true);
-            dailyActivities.notifyAll();
-        }
-    }
-
 
     private void fillIslandAnimalsAndPlants(Island island, Random random, EntityCharacteristicConfig
             entityCharacteristicConfig) {
-        island.getIsland().values()
+        island.getIslandCells().values()
                 .forEach(list -> List.of(EntityType.values())
                         .forEach(currentEntityType -> IntStream.range(0, random.nextInt(getMaxCountOnField(entityCharacteristicConfig, currentEntityType)))
                                 .forEach(_ -> list.add(createCurrentEntity(entityCharacteristicConfig, currentEntityType)))));
     }
-
 
     private Entity createCurrentEntity(EntityCharacteristicConfig entityCharacteristicConfig, EntityType
             currentEntityType) {
@@ -333,21 +111,20 @@ public class GameOfIsland {
         return currentEntity;
     }
 
-
     private Integer getMaxCountOnField(EntityCharacteristicConfig entityCharacteristicConfig, EntityType
             entityType) {
         return entityCharacteristicConfig.getEntityMapConfig().get(entityType).getMaxCountOnField();
     }
 
     private Island createIsland(IslandConfig islandConfig) {
-        Map<Field, List<Entity>> island = new HashMap<>();
+        Map<Field, List<Entity>> islandCell = new HashMap<>();
         for (int i = 0; i < islandConfig.getHeight(); i++) {
             for (int j = 0; j < islandConfig.getWidth(); j++) {
                 Field field = new Field(i, j);
-                island.put(field, new ArrayList<>());
+                islandCell.put(field, new ArrayList<>());
             }
         }
-        return new Island(island);
+        return new Island(islandCell);
     }
 
     private void greetings() {
@@ -370,13 +147,72 @@ public class GameOfIsland {
         } catch (InterruptedException _) {
         }
     }
-}
 
-class MyTestClass { //TODO: Удалить перед pullRequest!!!
-    public static void main(String[] args) throws InterruptedException {
-        Entity entity = new Mouse(1.0, 1, 1, 1.1);
-        System.out.println(entity instanceof Herbivore);
+    public void initializeIsland() {
+        greetings();
+        updateSettingsService.updateSettings();
+        System.out.println(GO_GO_GO);
+        island = createIsland(islandConfig);
+        fillIslandAnimalsAndPlants(island, random, entityCharacteristicConfig);
+        moveService = new MoveServiceImpl(island, islandConfig);
+        collectAndDisplayStatisticsService = new CollectAndDisplayStatisticsServiceImpl(island, updateSettingsService, imagesOfEntitiesConfig);
+        synchronized (dailyActivities) {
+            dailyActivities.setIslandInitialized(true);
+            dailyActivities.notifyAll();
+        }
+    }
 
+    public Random getRandom() {
+        return random;
+    }
+
+    public EntityCharacteristicConfig getEntityCharacteristicConfig() {
+        return entityCharacteristicConfig;
+    }
+
+    public PossibilityOfEatingConfig getPossibilityOfEatingConfig() {
+        return possibilityOfEatingConfig;
+    }
+
+    public AnimalConfig getAnimalConfig() {
+        return animalConfig;
+    }
+
+    public UpdateSettingsService getUpdateSettingsService() {
+        return updateSettingsService;
+    }
+
+    public Island getIsland() {
+        return island;
+    }
+
+    public MoveService getMoveService() {
+        return moveService;
+    }
+
+    public CollectAndDisplayStatisticsServiceImpl getCollectAndDisplayStatisticsService() {
+        return collectAndDisplayStatisticsService;
+    }
+
+    public DailyActivities getDailyActivities() {
+        return dailyActivities;
+    }
+
+    public ExecutorService getExecutor() {
+        return executor;
+    }
+
+    public BufferedReader getReader() {
+        return reader;
+    }
+
+    public ExecutorService getShutdownExecutor() {
+        return shutdownExecutor;
+    }
+
+    public void setShutdownExecutor(ExecutorService shutdownExecutor) {
+        this.shutdownExecutor = shutdownExecutor;
     }
 }
+
 

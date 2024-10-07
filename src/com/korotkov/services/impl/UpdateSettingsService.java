@@ -163,13 +163,13 @@ public class UpdateSettingsService {
         Map<EntityType, Entity> typeEntityMap = entityCharacteristicConfig.getEntityMapConfig();
 
         if (entityClass == Predator.class) {
-            island.getIsland().values().forEach(entitiesList -> entitiesList.forEach(entity -> {
+            island.getIslandCells().values().forEach(entitiesList -> entitiesList.forEach(entity -> {
                 if (entity instanceof Predator && ((Predator) entity).getHealthPercent() > 0) {
                     liveClassEntities.add(entity.getClass());
                 }
             }));
         } else if (entityClass == Herbivore.class) {
-            island.getIsland().values().forEach(entitiesList -> entitiesList.forEach(entity -> {
+            island.getIslandCells().values().forEach(entitiesList -> entitiesList.forEach(entity -> {
                 if (entity instanceof Herbivore && ((Herbivore) entity).getHealthPercent() > 0) {
                     liveClassEntities.add(entity.getClass());
                 }
@@ -177,7 +177,7 @@ public class UpdateSettingsService {
         }
         liveClassEntities.forEach(eClass -> entityTypeMap.put(counter[0]++, typeEntityMap.keySet().stream().filter(entType -> entType.getClazz() == eClass).findFirst().get()));
         Animal sample = (Animal) chooseAndSetEntity(entityClass, "животное", entityTypeMap);
-        island.getIsland().values().forEach(entities -> entities.forEach(entity -> {
+        island.getIslandCells().values().forEach(entities -> entities.forEach(entity -> {
             if (entity.getClass() == sample.getClass()) {
                 setCurrentEntity(entity, sample.getWeight(), sample.getMaxCountOnField(), sample.getSpeed(), sample.getKgToGetFull(), sample.getCountBornBaby());
             }
@@ -217,7 +217,7 @@ public class UpdateSettingsService {
     private void changeAllLiveAnimals(Island island, Class<? extends Entity> animalClass) {
         Map<String, Number> aParameters = changeAllAnimals(animalClass);
         if (animalClass == Herbivore.class) {
-            island.getIsland().values().forEach(entities -> entities.forEach(entity -> {
+            island.getIslandCells().values().forEach(entities -> entities.forEach(entity -> {
                 if (entity instanceof Herbivore herbivore) {
                     changeCurrentAnimal(herbivore,
                             (double) aParameters.get("weight"),
@@ -228,7 +228,7 @@ public class UpdateSettingsService {
                 }
             }));
         } else if (animalClass == Predator.class) {
-            island.getIsland().values().forEach(entities -> entities.forEach(entity -> {
+            island.getIslandCells().values().forEach(entities -> entities.forEach(entity -> {
                 if (entity instanceof Predator predator) {
                     changeCurrentAnimal(predator,
                             (double) aParameters.get("weight"),

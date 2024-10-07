@@ -26,10 +26,10 @@ public class MoveServiceImpl implements MoveService {
         if (animalSpeed < 1 || movingAnimal.getHealthPercent() <= 0) return; //А вдруг скорость = 0 или его слопали
         --animalSpeed;
         if (!movingAnimal.isMovedInThisLap()) movingAnimal.setMovedInThisLap(true);
-        List<Entity> fromEntities = island.getIsland().get(fromField);
+        List<Entity> fromEntities = island.getIslandCells().get(fromField);
         Optional<Field> optionalField = getFieldToMove(fromField, directionType); // Поле куда будем ходить
         if (optionalField.isPresent()) { //Если есть куда ходить то ходим!!! Или стоим на той же клетке
-            List<Entity> entitiesToMove = island.getIsland().get(optionalField.get());
+            List<Entity> entitiesToMove = island.getIslandCells().get(optionalField.get());
             int countAnimals = (int) entitiesToMove.stream().filter(e -> e.getClass() == movingAnimal.getClass() && ((Animal) e).getHealthPercent() > 0).count();
             if (countAnimals < movingAnimal.getMaxCountOnField()) { // Если животных не max - то добавляем животное на новую локацию
                 synchronized (fromEntities) {
@@ -49,10 +49,10 @@ public class MoveServiceImpl implements MoveService {
         if (animalSpeed < 1 || movingAnimal.getHealthPercent() <= 0) return; //А вдруг скорость = 0 или его слопали
         --animalSpeed;
         //if (!movingAnimal.isMovedInThisLap()) movingAnimal.setMovedInThisLap(true);
-        List<Entity> fromEntities = island.getIsland().get(fromField);
+        List<Entity> fromEntities = island.getIslandCells().get(fromField);
         Optional<Field> optionalField = getFieldToMove(fromField, directionType); // Поле куда будем ходить
         if (optionalField.isPresent()) { //Если есть куда ходить то ходим!!! Или стоим на той же клетке
-            List<Entity> entitiesToMove = island.getIsland().get(optionalField.get());
+            List<Entity> entitiesToMove = island.getIslandCells().get(optionalField.get());
             int countAnimals = (int) entitiesToMove.stream().filter(e -> e.getClass() == movingAnimal.getClass() && ((Animal) e).getHealthPercent() > 0).count();
             if (countAnimals < movingAnimal.getMaxCountOnField()) { // Если животных не max - то добавляем животное на новую локацию
                 synchronized (fromEntities) {
@@ -73,22 +73,22 @@ public class MoveServiceImpl implements MoveService {
         switch (directionType) {
             case LEFT -> {
                 if (fromField.getY() != 0)
-                    optionalField = island.getIsland().keySet().stream().filter(field -> field.getX() == fromField.getX() && field.getY() == fromField.getY() - 1).findFirst();
+                    optionalField = island.getIslandCells().keySet().stream().filter(field -> field.getX() == fromField.getX() && field.getY() == fromField.getY() - 1).findFirst();
 
             }
             case RIGHT -> {
                 if (fromField.getY() != islandConfig.getWidth() - 1)
-                    optionalField = island.getIsland().keySet().stream().filter(field -> field.getX() == fromField.getX() && field.getY() == fromField.getY() + 1).findFirst();
+                    optionalField = island.getIslandCells().keySet().stream().filter(field -> field.getX() == fromField.getX() && field.getY() == fromField.getY() + 1).findFirst();
 
             }
             case UP -> {
                 if (fromField.getX() != 0)
-                    optionalField = island.getIsland().keySet().stream().filter(field -> field.getY() == fromField.getY() && field.getX() == fromField.getX() - 1).findFirst();
+                    optionalField = island.getIslandCells().keySet().stream().filter(field -> field.getY() == fromField.getY() && field.getX() == fromField.getX() - 1).findFirst();
 
             }
             case DOWN -> {
                 if (fromField.getX() != islandConfig.getHeight() - 1)
-                    optionalField = island.getIsland().keySet().stream().filter(field -> field.getY() == fromField.getY() && field.getX() == fromField.getX() + 1).findFirst();
+                    optionalField = island.getIslandCells().keySet().stream().filter(field -> field.getY() == fromField.getY() && field.getX() == fromField.getX() + 1).findFirst();
             }
         }
         return optionalField;

@@ -4,11 +4,11 @@ import com.korotkov.GameOfIsland;
 import com.korotkov.models.island.Island;
 
 public class RestoreAnimals implements Runnable {
-    private final Island island;
+    private final GameOfIsland game;
     private final DailyActivities dailyActivities;
 
     public RestoreAnimals(GameOfIsland game) {
-        island = game.getIsland();
+        this.game = game;
         dailyActivities = game.getDailyActivities();
     }
 
@@ -20,6 +20,7 @@ public class RestoreAnimals implements Runnable {
                     dailyActivities.wait();
                 }
             }
+            Island island = game.getIsland();
             while (!Thread.interrupted()) {
                 synchronized (dailyActivities) {
                     while (!dailyActivities.isShownDailyStatistics() || dailyActivities.isPressPause()) {
@@ -40,7 +41,6 @@ public class RestoreAnimals implements Runnable {
                 }
             }
         } catch (InterruptedException _) {
-            System.out.println("Interrupted дохлятина");
         }
 
     }

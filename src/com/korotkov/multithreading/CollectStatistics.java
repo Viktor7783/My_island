@@ -4,17 +4,24 @@ import com.korotkov.GameOfIsland;
 import com.korotkov.services.impl.CollectAndDisplayStatisticsServiceImpl;
 
 public class CollectStatistics implements Runnable {
+    private final GameOfIsland game;
     private final DailyActivities dailyActivities;
-    private final CollectAndDisplayStatisticsServiceImpl collectAndDisplayStatisticsService;
 
     public CollectStatistics(GameOfIsland game) {
+        this.game = game;
         dailyActivities = game.getDailyActivities();
-        collectAndDisplayStatisticsService = game.getCollectAndDisplayStatisticsService();
+
     }
 
     @Override
     public void run() {
         try {
+            synchronized (dailyActivities) {
+                while (!dailyActivities.isIslandInitialized()) {
+                    dailyActivities.wait();
+                }
+            }
+            CollectAndDisplayStatisticsServiceImpl collectAndDisplayStatisticsService = game.getCollectAndDisplayStatisticsService();
             while (!Thread.interrupted()) {
                 synchronized (dailyActivities) {
                     while (!dailyActivities.isTimeToCollectStatistics() || dailyActivities.isPressPause()) {
@@ -28,7 +35,6 @@ public class CollectStatistics implements Runnable {
                 }
             }
         } catch (InterruptedException _) {
-            System.out.println("Interrupted сбор статистики");
         }
     }
 }

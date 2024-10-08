@@ -7,13 +7,13 @@ import com.korotkov.models.island.Island;
 import java.util.Random;
 
 public class RestorePlants implements Runnable {
-    private final Island island;
+    private final GameOfIsland game;
     private final EntityCharacteristicConfig entityCharacteristicConfig;
     private final Random random;
     private final DailyActivities dailyActivities;
 
     public RestorePlants(GameOfIsland game) {
-        island = game.getIsland();
+        this.game = game;
         entityCharacteristicConfig = game.getEntityCharacteristicConfig();
         random = game.getRandom();
         dailyActivities = game.getDailyActivities();
@@ -27,6 +27,7 @@ public class RestorePlants implements Runnable {
                     dailyActivities.wait();
                 }
             }
+            Island island = game.getIsland();
             while (!Thread.interrupted()) {
                 synchronized (dailyActivities) {
                     while (!dailyActivities.isShownDailyStatistics() || dailyActivities.isPressPause()) {
@@ -48,7 +49,6 @@ public class RestorePlants implements Runnable {
                 }
             }
         } catch (InterruptedException _) {
-            System.out.println("Interrupted растения");
         }
     }
 }

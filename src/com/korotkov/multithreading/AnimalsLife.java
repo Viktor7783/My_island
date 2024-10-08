@@ -16,17 +16,15 @@ import java.util.Map;
 import java.util.Random;
 
 public class AnimalsLife implements Runnable {
-    private final Island island;
+    private final GameOfIsland game;
     private final Random random;
-    private final MoveService moveService;
     private final PossibilityOfEatingConfig possibilityOfEatingConfig;
     private final AnimalConfig animalConfig;
     private final DailyActivities dailyActivities;
 
     public AnimalsLife(GameOfIsland game) {
-        island = game.getIsland();
+        this.game = game;
         random = game.getRandom();
-        moveService = game.getMoveService();
         possibilityOfEatingConfig = game.getPossibilityOfEatingConfig();
         animalConfig = game.getAnimalConfig();
         dailyActivities = game.getDailyActivities();
@@ -35,6 +33,13 @@ public class AnimalsLife implements Runnable {
     @Override
     public void run() {
         try {
+            synchronized (dailyActivities) {
+                while (!dailyActivities.isIslandInitialized()) {
+                    dailyActivities.wait();
+                }
+            }
+            Island island = game.getIsland();
+            MoveService moveService = game.getMoveService();
             while (!Thread.interrupted()) {
                 synchronized (dailyActivities) {
                     while (!dailyActivities.isTimeToAnimalActions() || dailyActivities.isPressPause()) {
@@ -72,7 +77,6 @@ public class AnimalsLife implements Runnable {
                 }
             }
         } catch (InterruptedException _) {
-            System.out.println("Interrupted жизнь животных");
         }
     }
 }

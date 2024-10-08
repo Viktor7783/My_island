@@ -12,14 +12,13 @@ import static com.korotkov.config.Constants.*;
 
 public class PauseMenu implements Runnable {
     private final GameOfIsland game;
-    private final Island island;
+    private Island island;
     private final UpdateSettingsService updateSettingsService;
     private final BufferedReader reader;
     private final DailyActivities dailyActivities;
 
     public PauseMenu(GameOfIsland game) {
         this.game = game;
-        island = game.getIsland();
         updateSettingsService = game.getUpdateSettingsService();
         reader = game.getReader();
         dailyActivities = game.getDailyActivities();
@@ -29,6 +28,7 @@ public class PauseMenu implements Runnable {
     public void run() {
         if (!dailyActivities.isIslandInitialized()) {
             game.initializeIsland();
+            island = game.getIsland();
         }
         try {
             while (!Thread.interrupted()) {
@@ -68,7 +68,6 @@ public class PauseMenu implements Runnable {
                 }
             }
         } catch (IOException | InterruptedException _) {
-            System.out.println("interrupted прослушка" + Thread.currentThread().getName());//todo: delete
         }
     }
 }
